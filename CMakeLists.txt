@@ -278,6 +278,8 @@ if(IOS)
     )
 endif()
 
+
+
 if(WIN32)
     target_compile_definitions(${EXECUTABLE_NAME} PUBLIC
         _CRT_SECURE_NO_WARNINGS
@@ -293,6 +295,52 @@ endif()
 if(WIN32)
     target_link_libraries(${EXECUTABLE_NAME}
         winmm
+    )
+endif()
+
+if (NINTENDO_3DS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/opt/devkitpro/libctru/include")
+    target_include_directories(${EXECUTABLE_NAME} PUBLIC
+        "/opt/devkitpro/libctru/include"
+        "/opt/devkitpro/portlibs/3ds/include"
+        "/opt/devkitpro/portlibs/3ds/include/SDL"
+    )
+    # add the following libraries via linker flags: ZLIB, citro2d, citro3D, SDL, SDL_gfx, SDL_image, SDL_mixer
+    target_link_libraries(${EXECUTABLE_NAME}
+        -lz
+        -lcitro2d
+        -lcitro3d
+        -lSDL
+        -lSDL_gfx
+        -lSDL_image
+        -lSDL_mixer
+    )
+
+endif()
+
+if (NINTENDO_WII)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/opt/devkitpro/libogc/include")
+    target_include_directories(${EXECUTABLE_NAME} PUBLIC
+        "/opt/devkitpro/libogc/include"
+        "/opt/devkitpro/portlibs/ppc/include"
+        "/opt/devkitpro/portlibs/wii/include"
+        "/opt/devkitpro/portlibs/wii/include/SDL"
+    )
+    add_definitions("-D__WII__=1")
+    # add the following libraries via linker flags: ZLIB, SDL, SDL_gfx, SDL_image, SDL_mixer
+    target_link_libraries(${EXECUTABLE_NAME}
+        -lSDL_gfx
+        -lSDL_mixer
+        -lSDL_image
+        -lSDL
+        -lz
+        -lfat
+        -lwiiuse
+        -lbte
+        -lwiikeyboard
+        -logc
+        -lm
+        -laesnd
     )
 endif()
 
@@ -328,19 +376,25 @@ add_subdirectory("third_party/fpattern")
 target_link_libraries(${EXECUTABLE_NAME} ${FPATTERN_LIBRARY})
 target_include_directories(${EXECUTABLE_NAME} PRIVATE ${FPATTERN_INCLUDE_DIR})
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT NINTENDO_3DS AND NOT NINTENDO_WII)
     add_subdirectory("third_party/zlib")
     add_subdirectory("third_party/sdl2")
 else()
-    find_package(ZLIB)
-    find_package(SDL2)
+    if (NINTENDO_3DS OR NINTENDO_WII)
+
+    else()
+        find_package(ZLIB)
+        find_package(SDL2)
+    endif()
 endif()
 
-target_link_libraries(${EXECUTABLE_NAME} ${ZLIB_LIBRARIES})
-target_include_directories(${EXECUTABLE_NAME} PRIVATE ${ZLIB_INCLUDE_DIRS})
+if (NOT NINTENDO_3DS)
+    target_link_libraries(${EXECUTABLE_NAME} ${ZLIB_LIBRARIES})
+    target_include_directories(${EXECUTABLE_NAME} PRIVATE ${ZLIB_INCLUDE_DIRS})
 
-target_link_libraries(${EXECUTABLE_NAME} ${SDL2_LIBRARIES})
-target_include_directories(${EXECUTABLE_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+    target_link_libraries(${EXECUTABLE_NAME} ${SDL2_LIBRARIES})
+    target_include_directories(${EXECUTABLE_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+endif()
 
 if(APPLE)
     if(IOS)

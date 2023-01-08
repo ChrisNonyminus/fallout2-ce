@@ -138,6 +138,9 @@ int gameMoviesSave(File* stream)
 // 0x44E690
 int gameMoviePlay(int movie, int flags)
 {
+#if defined(__WII__) // temporary workaround for movies not loading
+    return 0;
+#endif
     gGameMovieIsPlaying = true;
 
     const char* movieFileName = gMovieFileNames[movie];
@@ -178,6 +181,7 @@ int gameMoviePlay(int movie, int flags)
         0,
         WINDOW_MODAL);
     if (win == -1) {
+        debugPrint("\ngmovie_play() - Error: Unable to create window\n");
         gGameMovieIsPlaying = false;
         return -1;
     }

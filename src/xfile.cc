@@ -100,7 +100,13 @@ XFile* xfileOpen(const char* filePath, const char* mode)
         // [filePath] is a relative path. Loop thru open xbases and attempt to
         // open [filePath] from appropriate xbase.
         XBase* curr = gXbaseHead;
+#if 0
+        printf("searching for %s\n", filePath);
+#endif
         while (curr != NULL) {
+#if 0
+            printf("current xbase in search: %s\n", curr->path);
+#endif
             if (curr->isDbase) {
                 // Attempt to open dfile stream from dbase.
                 stream->dfile = dfileOpen(curr->dbase, filePath, mode);
@@ -124,6 +130,9 @@ XFile* xfileOpen(const char* filePath, const char* mode)
         }
 
         if (stream->file == NULL) {
+#if 0
+            printf("file not found in xbase, trying to open it directly\n");
+#endif
             // File was not opened during the loop above. Attempt to open file
             // relative to the current working directory.
             stream->file = compat_fopen(filePath, mode);
@@ -510,6 +519,9 @@ bool xbaseOpen(const char* path)
 
     XBase* xbase = (XBase*)malloc(sizeof(*xbase));
     if (xbase == NULL) {
+#if defined(__WII__)
+        printf("xbaseOpen: malloc failed at %s:%d\n", __FILE__, __LINE__);
+#endif
         return false;
     }
 
@@ -518,6 +530,10 @@ bool xbaseOpen(const char* path)
     xbase->path = compat_strdup(path);
     if (xbase->path == NULL) {
         free(xbase);
+#if defined(__WII__)
+        printf("xbaseOpen: strdup failed at %s:%d\n", __FILE__, __LINE__);
+        printf("path was: %s\n", path);
+#endif
         return false;
     }
 
@@ -533,6 +549,9 @@ bool xbaseOpen(const char* path)
     char workingDirectory[COMPAT_MAX_PATH];
     if (getcwd(workingDirectory, COMPAT_MAX_PATH) == NULL) {
         // FIXME: Leaking xbase and path.
+#if defined(__WII__)
+        printf("xbaseOpen: getcwd failed at %s:%d\n", __FILE__, __LINE__);
+#endif
         return false;
     }
 
@@ -545,6 +564,10 @@ bool xbaseOpen(const char* path)
 
     if (xbaseMakeDirectory(path) != 0) {
         // FIXME: Leaking xbase and path.
+#if defined(__WII__)
+        printf("xbaseOpen: xbaseMakeDirectory failed at %s:%d\n", __FILE__, __LINE__);
+        printf("path was: %s\n", path);
+#endif
         return false;
     }
 

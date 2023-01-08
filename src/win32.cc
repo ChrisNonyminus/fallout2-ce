@@ -12,8 +12,24 @@
 #include "svga.h"
 #include "window_manager.h"
 
+#if __3DS__
+#include <3ds.h>
+#endif
+
+#if __WII__
+#include <fat.h>
+#include <ogcsys.h>
+#include <wiiuse/wiiuse.h>
+#include <ogc/usbmouse.h>
+#include <wiikeyboard/keyboard.h>
+#endif
+
 #if __APPLE__ && TARGET_OS_IOS
 #include "platform/ios/paths.h"
+#endif
+
+#if defined(__WII__) || defined(__3DS__)
+#undef main // SDL_main.h defines main() as SDL_main()
 #endif
 
 namespace fallout {
@@ -62,6 +78,11 @@ int main(int argc, char* argv[])
     chdir(SDL_AndroidGetExternalStoragePath());
 #endif
 
+#if defined(__WII__)
+    fatInitDefault();
+
+#endif
+
     SDL_ShowCursor(SDL_DISABLE);
     gProgramIsActive = true;
     return falloutMain(argc, argv);
@@ -70,7 +91,45 @@ int main(int argc, char* argv[])
 
 } // namespace fallout
 
+#if defined(__WII__)
+extern "C" void Terminate();
+void resetCallback(u32 irq, void* ctx)
+{
+    Terminate();
+}
+#endif
+
+
 int main(int argc, char* argv[])
 {
+#if defined(__WII__)    
+    L2Enhance();
+    u32 version = IOS_GetVersion();
+    s32 preferred = IOS_GetPreferredVersion();
+    if (preferred > 0 && version != preferred) {
+        IOS_ReloadIOS(preferred);
+    }
+    WPAD_Init();
+    PAD_Init();
+    WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+    SYS_SetPowerCallback(Terminate);
+    SYS_SetResetCallback(resetCallback);
+    WPAD_SetVRes(WPAD_CHAN_ALL, 640, 480);
+    MOUSE_Init();
+    KEYBOARD_Init(NULL);
+#endif
+
     return fallout::main(argc, argv);
+}
+
+extern "C" {
+#if __WII__ // lmao
+bool TerminateRequested = false;
+void Terminate()
+{
+    SDL_Quit();
+    printf("Terminate requested\n");
+    exit(1);
+}
+#endif
 }

@@ -192,11 +192,20 @@ int gameSoundInit()
         return -1;
     }
 
+#if !defined(__WII__)
+
     if (!settings.sound.initialize) {
         return 0;
     }
-
+    
     gGameSoundDebugEnabled = settings.sound.debug;
+#else
+#if 1
+    return 0;
+#endif
+
+    gGameSoundDebugEnabled = true;
+#endif
 
     if (gGameSoundDebugEnabled) {
         debugPrint("Initializing sound system...");
@@ -254,12 +263,20 @@ int gameSoundInit()
         }
     }
 
+#if defined(__WII__)
+    debugPrint("Setting sound I/O calls...");
+#endif
+
     if (soundSetDefaultFileIO(gameSoundFileOpen, gameSoundFileClose, gameSoundFileRead, gameSoundFileWrite, gameSoundFileSeek, gameSoundFileTell, gameSoundFileGetSize) != 0) {
         if (gGameSoundDebugEnabled) {
             debugPrint("Failure setting sound I/O calls.\n");
         }
         return -1;
     }
+
+#if defined(__WII__)
+    debugPrint("Success.\n");
+#endif
 
     tickersAdd(_gsound_bkg_proc);
     gGameSoundInitialized = true;
@@ -332,6 +349,10 @@ int gameSoundInit()
 
     _gsound_background_fade = 0;
     gBackgroundSoundFileName[0] = '\0';
+
+#if defined(__WII__)
+    debugPrint("gameSoundInit() done.\n");
+#endif
 
     return 0;
 }

@@ -306,6 +306,9 @@ int interfaceInit()
     int fid;
 
     if (gInterfaceBarWindow != -1) {
+#if defined(__WII__)
+        debugPrint("Interface already initialized.\n");
+#endif
         return -1;
     }
 
@@ -322,12 +325,23 @@ int interfaceInit()
 
     gInterfaceBarWindow = windowCreate(interfaceBarWindowX, interfaceBarWindowY, gInterfaceBarWidth, INTERFACE_BAR_HEIGHT, _colorTable[0], WINDOW_HIDDEN);
     if (gInterfaceBarWindow == -1) {
+
+#if defined(__WII__)
+        debugPrint("Failed to create interface bar window.\n");
+        debugPrint("Interface bar width: %d\n", gInterfaceBarWidth);
+        debugPrint("Interface bar height: %d\n", INTERFACE_BAR_HEIGHT);
+        debugPrint("Interface bar window x: %d\n", interfaceBarWindowX);
+        debugPrint("Interface bar window y: %d\n", interfaceBarWindowY);
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     gInterfaceWindowBuffer = windowGetBuffer(gInterfaceBarWindow);
     if (gInterfaceWindowBuffer == NULL) {
+#if defined(__WII__)
+        debugPrint("Failed to get interface bar window buffer.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
@@ -338,6 +352,10 @@ int interfaceInit()
         FrmImage backgroundFrmImage;
         fid = buildFid(OBJ_TYPE_INTERFACE, 16, 0, 0, 0);
         if (!backgroundFrmImage.lock(fid)) {
+#if defined(__WII__)
+            debugPrint("Failed to lock interface bar background image.\n");
+            debugPrint("FID: %d\n", fid);
+#endif
             return intface_fatal_error(-1);
         }
 
@@ -347,18 +365,27 @@ int interfaceInit()
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 47, 0, 0, 0);
     if (!_inventoryButtonNormalFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock inventory button normal image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 46, 0, 0, 0);
     if (!_inventoryButtonPressedFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock inventory button pressed image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     gInventoryButton = buttonCreate(gInterfaceBarWindow, 211 + gInterfaceBarContentOffset, 40, 32, 21, -1, -1, -1, KEY_LOWERCASE_I, _inventoryButtonNormalFrmImage.getData(), _inventoryButtonPressedFrmImage.getData(), NULL, 0);
     if (gInventoryButton == -1) {
+#if defined(__WII__)
+        debugPrint("Failed to create inventory button.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
@@ -367,18 +394,27 @@ int interfaceInit()
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 18, 0, 0, 0);
     if (!_optionsButtonNormalFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock options button normal image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 17, 0, 0, 0);
     if (!_optionsButtonPressedFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock options button pressed image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     gOptionsButton = buttonCreate(gInterfaceBarWindow, 210 + gInterfaceBarContentOffset, 61, 34, 34, -1, -1, -1, KEY_LOWERCASE_O, _optionsButtonNormalFrmImage.getData(), _optionsButtonPressedFrmImage.getData(), NULL, 0);
     if (gOptionsButton == -1) {
+#if defined(__WII__)
+        debugPrint("Failed to create options button.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
@@ -387,24 +423,36 @@ int interfaceInit()
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 6, 0, 0, 0);
     if (!_skilldexButtonNormalFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock skilldex button normal image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 7, 0, 0, 0);
     if (!_skilldexButtonPressedFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock skilldex button pressed image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 6, 0, 0, 0);
     if (!_skilldexButtonMaskFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock skilldex button mask image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     gSkilldexButton = buttonCreate(gInterfaceBarWindow, 523 + gInterfaceBarContentOffset, 6, 22, 21, -1, -1, -1, KEY_LOWERCASE_S, _skilldexButtonNormalFrmImage.getData(), _skilldexButtonPressedFrmImage.getData(), NULL, BUTTON_FLAG_TRANSPARENT);
     if (gSkilldexButton == -1) {
+#if defined(__WII__)
+        debugPrint("Failed to create skilldex button.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
@@ -414,24 +462,36 @@ int interfaceInit()
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 13, 0, 0, 0);
     if (!_mapButtonNormalFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock map button normal image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 10, 0, 0, 0);
     if (!_mapButtonPressedFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock map button pressed image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 13, 0, 0, 0);
     if (!_mapButtonMaskFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock map button mask image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     gMapButton = buttonCreate(gInterfaceBarWindow, 526 + gInterfaceBarContentOffset, 39, 41, 19, -1, -1, -1, KEY_TAB, _mapButtonNormalFrmImage.getData(), _mapButtonPressedFrmImage.getData(), NULL, BUTTON_FLAG_TRANSPARENT);
     if (gMapButton == -1) {
+#if defined(__WII__)
+        debugPrint("Failed to create map button.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
@@ -441,18 +501,27 @@ int interfaceInit()
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 59, 0, 0, 0);
     if (!_pipboyButtonNormalFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock pipboy button normal image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 58, 0, 0, 0);
     if (!_pipboyButtonPressedFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock pipboy button pressed image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     gPipboyButton = buttonCreate(gInterfaceBarWindow, 526 + gInterfaceBarContentOffset, 77, 41, 19, -1, -1, -1, KEY_LOWERCASE_P, _pipboyButtonNormalFrmImage.getData(), _pipboyButtonPressedFrmImage.getData(), NULL, 0);
     if (gPipboyButton == -1) {
+#if defined(__WII__)
+        debugPrint("Failed to create pipboy button.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
@@ -462,18 +531,27 @@ int interfaceInit()
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 57, 0, 0, 0);
     if (!_characterButtonNormalFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock character button normal image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 56, 0, 0, 0);
     if (!_characterButtonPressedFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock character button pressed image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     gCharacterButton = buttonCreate(gInterfaceBarWindow, 526 + gInterfaceBarContentOffset, 58, 41, 19, -1, -1, -1, KEY_LOWERCASE_C, _characterButtonNormalFrmImage.getData(), _characterButtonPressedFrmImage.getData(), NULL, 0);
     if (gCharacterButton == -1) {
+#if defined(__WII__)
+        debugPrint("Failed to create character button.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
@@ -483,12 +561,18 @@ int interfaceInit()
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 32, 0, 0, 0);
     if (!_itemButtonNormalFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock item button normal image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }
 
     fid = buildFid(OBJ_TYPE_INTERFACE, 31, 0, 0, 0);
     if (!_itemButtonPressedFrmImage.lock(fid)) {
+#if defined(__WII__)
+        debugPrint("Failed to lock item button pressed image.\n");
+#endif
         // NOTE: Uninline.
         return intface_fatal_error(-1);
     }

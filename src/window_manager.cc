@@ -297,7 +297,9 @@ void windowManagerExit(void)
             textFontsExit();
             _colorsClose();
 
+#if !defined(__3DS__) && !defined(__WII__)
             SDL_DestroyWindow(gSdlWindow);
+#endif
 
             gWindowSystemInitialized = false;
 
@@ -319,28 +321,46 @@ int windowCreate(int x, int y, int width, int height, int color, int flags)
     Window* tmp;
 
     if (!gWindowSystemInitialized) {
+#if defined(__WII__)
+        debugPrint("windowCreate: Window system not initialized\n");
+#endif
         return -1;
     }
 
     if (gWindowsLength == MAX_WINDOW_COUNT) {
+#if defined(__WII__)
+        debugPrint("windowCreate: Too many windows\n");
+#endif
         return -1;
     }
 
     if (width > rectGetWidth(&_scr_size)) {
+#if defined(__WII__)
+        debugPrint("windowCreate: Window width too large\n");
+#endif
         return -1;
     }
 
     if (height > rectGetHeight(&_scr_size)) {
+#if defined(__WII__)
+        debugPrint("windowCreate: Window height too large\n");
+#endif
         return -1;
     }
 
     Window* window = gWindows[gWindowsLength] = (Window*)internal_malloc(sizeof(*window));
     if (window == NULL) {
+#if defined(__WII__)
+        debugPrint("windowCreate: Out of memory\n");
+#endif
         return -1;
     }
 
     window->buffer = (unsigned char*)internal_malloc(width * height);
     if (window->buffer == NULL) {
+#if defined(__WII__)
+        debugPrint("windowCreate: Out of memory\n");
+#endif
         internal_free(window);
         return -1;
     }
@@ -1282,12 +1302,14 @@ void programWindowSetTitle(const char* title)
     }
 #endif
 
+#if !defined(__3DS__) && !defined(__WII__)
     strncpy(gProgramWindowTitle, title, 256);
     gProgramWindowTitle[256 - 1] = '\0';
 
     if (gSdlWindow != nullptr) {
         SDL_SetWindowTitle(gSdlWindow, gProgramWindowTitle);
     }
+#endif
 }
 
 // [open] implementation for palette operations backed by [XFile].
@@ -1339,6 +1361,7 @@ int paletteCloseFileImpl(int fd)
 // 0x4D8200
 bool showMesageBox(const char* text)
 {
+#if !defined(__3DS__) && !defined(__WII__)
     SDL_Cursor* prev = SDL_GetCursor();
     SDL_Cursor* cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     SDL_SetCursor(cursor);
@@ -1347,6 +1370,11 @@ bool showMesageBox(const char* text)
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetCursor(prev);
     SDL_FreeCursor(cursor);
+#else // wii and 3ds don't have OS windows to show to begin with, and SDL1.2 doesn't have a messagebox function
+    printf("%s\n", text);
+#endif
+
+
     return true;
 }
 

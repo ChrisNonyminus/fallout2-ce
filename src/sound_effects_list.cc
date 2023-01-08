@@ -12,6 +12,9 @@
 #include "pointer_registry.h"
 #include "sound_decoder.h"
 
+#if defined(__WII__)
+#include <ogcsys.h>
+#endif
 namespace fallout {
 
 typedef struct SoundEffectsListEntry {
@@ -65,6 +68,7 @@ bool soundEffectsListIsValidTag(int a1)
     return soundEffectsListTagToIndex(a1, NULL) == SFXL_OK;
 }
 
+
 // sfxl_init
 // 0x4A98F4
 int soundEffectsListInit(const char* soundEffectsPath, int a2, int debugLevel)
@@ -80,6 +84,9 @@ int soundEffectsListInit(const char* soundEffectsPath, int a2, int debugLevel)
 
     gSoundEffectsListPath = internal_strdup(soundEffectsPath);
     if (gSoundEffectsListPath == NULL) {
+#if defined(__WII__)
+        debugPrint("soundEffectsListInit: internal_strdup failed\n");
+#endif
         return SFXL_ERR;
     }
 
@@ -95,15 +102,16 @@ int soundEffectsListInit(const char* soundEffectsPath, int a2, int debugLevel)
     if (stream != NULL) {
         fileReadString(path, 255, stream);
         gSoundEffectsListEntriesLength = atoi(path);
-
+        
         gSoundEffectsListEntries = (SoundEffectsListEntry*)internal_malloc(sizeof(*gSoundEffectsListEntries) * gSoundEffectsListEntriesLength);
+
+
         for (int index = 0; index < gSoundEffectsListEntriesLength; index++) {
             SoundEffectsListEntry* entry = &(gSoundEffectsListEntries[index]);
-
             fileReadString(path, 255, stream);
 
             // Remove trailing newline.
-            *(path + strlen(path) - 1) = '\0';
+            path[strlen(path) - 1] = '\0';
             entry->name = internal_strdup(path);
 
             fileReadString(path, 255, stream);
@@ -114,6 +122,7 @@ int soundEffectsListInit(const char* soundEffectsPath, int a2, int debugLevel)
 
             fileReadString(path, 255, stream);
             entry->tag = atoi(path);
+
         }
 
         fileClose(stream);
@@ -124,12 +133,18 @@ int soundEffectsListInit(const char* soundEffectsPath, int a2, int debugLevel)
 
         err = soundEffectsListPopulateFileNames();
         if (err != SFXL_OK) {
+#if defined(__WII__)
+            debugPrint("soundEffectsListInit: soundEffectsListPopulateFileNames failed\n");
+#endif
             internal_free(gSoundEffectsListPath);
             return err;
         }
 
         err = soundEffectsListPopulateFileSizes();
         if (err != SFXL_OK) {
+#if defined(__WII__)
+            debugPrint("soundEffectsListInit: soundEffectsListPopulateFileSizes failed\n");
+#endif
             soundEffectsListClear();
             internal_free(gSoundEffectsListPath);
             return err;

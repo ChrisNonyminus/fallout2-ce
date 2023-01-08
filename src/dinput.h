@@ -35,6 +35,10 @@ void keyboardDeviceFree();
 void handleMouseEvent(SDL_Event* event);
 void handleTouchEvent(SDL_Event* event);
 
+#if defined(__WII__) || defined(__3DS__)
+extern SDL_Joystick* gJoystick;
+#endif
+
 } // namespace fallout
 
 #endif /* DINPUT_H */

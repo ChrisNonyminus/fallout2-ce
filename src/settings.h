@@ -5,14 +5,23 @@
 
 #include "game_config.h"
 
+
+#if defined(__WII__)
+#define PATH_PREFIX "sd:/fallout/"
+#elif defined(__3DS__)
+#define PATH_PREFIX "sdmc:/fallout/"
+#else
+#define PATH_PREFIX ""
+#endif
+
 namespace fallout {
 
 struct SystemSettings {
     std::string executable = "game";
-    std::string master_dat_path = "master.dat";
-    std::string master_patches_path = "data";
-    std::string critter_dat_path = "critter.dat";
-    std::string critter_patches_path = "data";
+    std::string master_dat_path = PATH_PREFIX "master.dat";
+    std::string master_patches_path = PATH_PREFIX "data";
+    std::string critter_dat_path = PATH_PREFIX "critter.dat";
+    std::string critter_patches_path = PATH_PREFIX "data";
     std::string language = ENGLISH;
     int scroll_lock = 0;
     bool interrupt_walk = true;
@@ -62,8 +71,8 @@ struct SoundSettings {
     int sndfx_volume = 22281;
     int speech_volume = 22281;
     int cache_size = 448;
-    std::string music_path1 = "sound\\music\\";
-    std::string music_path2 = "sound\\music\\";
+    std::string music_path1 = PATH_PREFIX "sound\\music\\";
+    std::string music_path2 = PATH_PREFIX "sound\\music\\";
 };
 
 struct DebugSettings {

@@ -6,6 +6,14 @@
 #include "svga.h"
 #include "vcr.h"
 
+#if defined(__3DS__)
+#include <3ds.h>
+#endif
+
+#if defined(__WII__)
+#include <wiiuse/wpad.h>
+#endif
+
 namespace fallout {
 
 typedef struct LogicalKeyEntry {
@@ -79,6 +87,10 @@ static LogicalKeyEntry gLogicalKeyEntries[SDL_NUM_SCANCODES];
 // 0x6AD830
 unsigned char gPressedPhysicalKeys[SDL_NUM_SCANCODES];
 
+#if !defined(__3DS__) && !defined(__WII__)
+#else
+#endif
+
 // 0x6AD930
 static unsigned int _kb_idle_start_time;
 
@@ -92,6 +104,74 @@ int gKeyboardLayout;
 //
 // 0x6AD93C
 unsigned char gPressedPhysicalKeysCount;
+
+
+#if defined(__3DS__) || defined(__WII__)
+SDL_SCANCODE getMappedKeyFromJoystick(int buttonCombo[4])
+{
+    SDL_SCANCODE key = SDL_SCANCODE_UNKNOWN;
+
+    // // buttonCombo[0]: first button
+    // // buttonCombo[1]: second button (optional)
+    // // buttonCombo[2]: third button (optional)
+    // // buttonCombo[3]: fourth button (optional)
+    
+
+    // if (buttonCombo[0] == -1) {
+    //     return key;
+    // }
+
+    // // gamecube buttons:
+    // // 0: A
+    // // 1: B
+    // // 2: X
+    // // 3: Y
+    // // 4: Z
+    // // 5: R
+    // // 6: L
+    // // 7: start
+
+    // // Fallout controls on keyboard for reference:
+    // // Escape: pause (or close menus)
+    // // Tab: map
+    // // Enter: end combat
+    // // Space: end turn
+    // // Arrow keys: move camera
+    // // Home: center camera
+    // // 1-8: use skills
+    // // I: inventory
+    // // O: pause
+    // // P: pipboy
+    // // A: attack
+    // // S: view skills
+    // // Z: rest
+    // // C: stats
+    // // B: swap weapon
+    // // N: cycle actions
+    // // M: change cursor mode
+
+    // if (buttonCombo[1] == -1) {
+    //     switch (buttonCombo[0]) {
+    //     case 0: // on gamecube this is A
+    //         key = SDL_SCANCODE_RETURN;
+    //         break;
+    //     case 1: // on gamecube this is B
+    //         key = SDL_SCANCODE_SPACE;
+    //         break;
+    //     case 2: // on gamecube this is X
+    //         key = SDL_SCANCODE_ESCAPE;
+    //         break;
+    //     case 3: // on gamecube this is Y
+    //         key = SDL_SCANCODE_TAB;
+    //         break;
+    //     case 4: // on gamecube this is Z
+
+    //     }
+    // } 
+
+    return key;
+}
+#endif
 
 // 0x4CBC90
 int keyboardInit()

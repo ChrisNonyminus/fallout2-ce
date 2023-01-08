@@ -9,8 +9,22 @@ namespace fallout {
 
 #define SFALL_CONFIG_FILE_NAME "ddraw.ini"
 
+#if defined(__WII__)
+#define PATH_PREFIX "sd:/fallout/"
+#elif defined(__3DS__)
+#define PATH_PREFIX "sdmc:/fallout/"
+#else
+#define PATH_PREFIX ""
+#endif
+
 bool gSfallConfigInitialized = false;
 Config gSfallConfig;
+
+#if defined (__WII__)
+#define SKIP_MOVIES 0 // tmp
+#else
+#define SKIP_MOVIES 0
+#endif
 
 bool sfallConfigInit(int argc, char** argv)
 {
@@ -33,7 +47,7 @@ bool sfallConfigInit(int argc, char** argv)
     configSetInt(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_MAIN_MENU_FONT_COLOR_KEY, 0);
     configSetInt(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_MAIN_MENU_OFFSET_X_KEY, 0);
     configSetInt(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_MAIN_MENU_OFFSET_Y_KEY, 0);
-    configSetInt(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_SKIP_OPENING_MOVIES_KEY, 0);
+    configSetInt(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_SKIP_OPENING_MOVIES_KEY, SKIP_MOVIES);
     configSetString(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_STARTING_MAP_KEY, "");
     configSetBool(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_DISPLAY_KARMA_CHANGES_KEY, false);
     configSetInt(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_OVERRIDE_CRITICALS_MODE_KEY, 2);
@@ -59,7 +73,7 @@ bool sfallConfigInit(int argc, char** argv)
         snprintf(path, sizeof(path), "%s\\%s", executable, SFALL_CONFIG_FILE_NAME);
         *ch = '\\';
     } else {
-        strcpy(path, SFALL_CONFIG_FILE_NAME);
+        strcpy(path, PATH_PREFIX SFALL_CONFIG_FILE_NAME);
     }
 
     configRead(&gSfallConfig, path, false);

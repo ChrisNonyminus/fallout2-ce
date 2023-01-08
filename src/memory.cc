@@ -6,6 +6,16 @@
 
 #include "debug.h"
 
+#if defined (__WII__)
+#include <ogcsys.h>
+#include <ogc/mutex.h>
+#include <ogc/system.h>
+#include <ogc/machine/processor.h>
+
+
+
+#endif
+
 namespace fallout {
 
 // A special value that denotes a beginning of a memory block data.
@@ -28,6 +38,92 @@ typedef struct MemoryBlockFooter {
     // See [MEMORY_BLOCK_FOOTER_GUARD].
     int guard;
 } MemoryBlockFooter;
+
+#if defined (__WII__)
+u8 *MEM2_start = (u8*)0x90200000;
+u8 *MEM2_end = (u8*)0x93200000;
+
+// strategy: if there is enough space in MEM2, allocate there, otherwise allocate in MEM1
+#define ALIGN(x, a) (((x) + ((a) - 1)) & ~((a) - 1))
+
+bool gAddressOccupied[0x3000000 / 32];
+
+void *MEM2_init(void *start, void *end, u32 size)
+{
+    u32 *p = (u32*)ALIGN((u32)start, 32);
+    u32* startp = p;
+    u32 *endp = (u32*)ALIGN((u32)end, 32);
+    u32 *endp2 = (u32*)((u32)endp - size);
+
+    while (p < endp2) {
+        *p++ = 0;
+        gAddressOccupied[(u32)p / 32] = false;
+    }
+
+    return (void*)startp;
+}
+
+void *MEM2_alloc(u32 size) {
+    static void* p = NULL;
+
+    if (p == NULL) {
+        p = MEM2_init(MEM2_start, MEM2_end, 48 * 1024 * 1024);
+    }
+
+    u32 *startp = (u32*)ALIGN((u32)p, 32);
+
+    while (startp < (u32*)MEM2_end) {
+        if (gAddressOccupied[(u32)startp / 32] == false) {
+            // check if there is enough space
+            u32 *endp = (u32*)((u32)startp + size);
+            u32 *endp2 = (u32*)ALIGN((u32)endp, 32);
+            bool enoughSpace = true;
+            for (u32 *p = startp; p < endp2; p++) {
+                if (gAddressOccupied[(u32)p / 32] == true) {
+                    enoughSpace = false;
+                    break;
+                }
+            }
+            if (enoughSpace) {
+                // mark as occupied
+                for (u32 *p = startp; p < endp2; p++) {
+                    gAddressOccupied[(u32)p / 32] = true;
+                }
+                p = (void*)endp2;
+                return (void*)startp;
+            }
+        }
+        startp += 32;
+    }
+
+    return (void*)malloc(size);
+}
+
+void MEM2_free(void *ptr) {
+    // if ptr is not in MEM2, just free it
+    if (ptr < MEM2_start) {
+        free(ptr);
+        return;
+    }
+
+    u32 *startp = (u32*)ALIGN((u32)ptr, 32);
+    u32 *endp = (u32*)((u32)startp + 32);
+    u32 *endp2 = (u32*)ALIGN((u32)endp, 32);
+    for (u32 *p = startp; p < endp2; p++) {
+        gAddressOccupied[(u32)p / 32] = false;
+    }
+}
+
+void* MEM2_realloc(void* ptr, size_t size) {
+    void* newPtr = MEM2_alloc(size);
+    if (newPtr == NULL) {
+        return NULL;
+    }
+    memcpy(newPtr, ptr, size);
+    MEM2_free(ptr);
+    return newPtr;
+}
+#endif
 
 static void* memoryBlockMallocImpl(size_t size);
 static void* memoryBlockReallocImpl(void* ptr, size_t size);
@@ -82,8 +178,12 @@ static void* memoryBlockMallocImpl(size_t size)
     if (size != 0) {
         size += sizeof(MemoryBlockHeader) + sizeof(MemoryBlockFooter);
         size += sizeof(int) - size % sizeof(int);
-
+// #if !defined(__WII__)
+#if 1
         unsigned char* block = (unsigned char*)malloc(size);
+#else
+        unsigned char* block = (unsigned char*)MEM2_alloc(size);
+#endif
         if (block != NULL) {
             // NOTE: Uninline.
             ptr = mem_prep_block(block, size);
@@ -126,8 +226,12 @@ static void* memoryBlockReallocImpl(void* ptr, size_t size)
             size += sizeof(MemoryBlockHeader) + sizeof(MemoryBlockFooter);
             size += sizeof(int) - size % sizeof(int);
         }
-
+// #if !defined(__WII__)
+#if 1
         unsigned char* newBlock = (unsigned char*)realloc(block, size);
+#else
+        unsigned char* newBlock = (unsigned char*)MEM2_realloc(block, size);
+#endif
         if (newBlock != NULL) {
             gMemoryBlocksCurrentSize += size;
             if (gMemoryBlocksCurrentSize > gMemoryBlocksMaximumSize) {
@@ -171,8 +275,12 @@ static void memoryBlockFreeImpl(void* ptr)
 
         gMemoryBlocksCurrentSize -= header->size;
         gMemoryBlocksCurrentCount--;
-
+// #if !defined(__WII__)
+#if 1
         free(block);
+#else
+        MEM2_free(block);
+#endif
     }
 }
 

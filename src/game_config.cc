@@ -42,6 +42,13 @@ char gGameConfigFilePath[COMPAT_MAX_PATH];
 // [configParseCommandLineArguments] for expected format.
 //
 // 0x444570
+#if defined(__WII__)
+#define PATH_PREFIX "sd:/fallout/"
+#elif defined(__3DS__)
+#define PATH_PREFIX "sdmc:/fallout/"
+#else
+#define PATH_PREFIX ""
+#endif
 bool gameConfigInit(bool isMapper, int argc, char** argv)
 {
     if (gGameConfigInitialized) {
@@ -54,10 +61,10 @@ bool gameConfigInit(bool isMapper, int argc, char** argv)
 
     // Initialize defaults.
     configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_EXECUTABLE_KEY, "game");
-    configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_MASTER_DAT_KEY, "master.dat");
-    configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_MASTER_PATCHES_KEY, "data");
-    configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_CRITTER_DAT_KEY, "critter.dat");
-    configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_CRITTER_PATCHES_KEY, "data");
+    configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_MASTER_DAT_KEY, PATH_PREFIX "master.dat");
+    configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_MASTER_PATCHES_KEY, PATH_PREFIX "data");
+    configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_CRITTER_DAT_KEY, PATH_PREFIX "critter.dat");
+    configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_CRITTER_PATCHES_KEY, PATH_PREFIX "data");
     configSetString(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_LANGUAGE_KEY, ENGLISH);
     configSetInt(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_SCROLL_LOCK_KEY, 0);
     configSetInt(&gGameConfig, GAME_CONFIG_SYSTEM_KEY, GAME_CONFIG_INTERRUPT_WALK_KEY, 1);
@@ -96,8 +103,8 @@ bool gameConfigInit(bool isMapper, int argc, char** argv)
     configSetInt(&gGameConfig, GAME_CONFIG_SOUND_KEY, GAME_CONFIG_SNDFX_VOLUME_KEY, 22281);
     configSetInt(&gGameConfig, GAME_CONFIG_SOUND_KEY, GAME_CONFIG_SPEECH_VOLUME_KEY, 22281);
     configSetInt(&gGameConfig, GAME_CONFIG_SOUND_KEY, GAME_CONFIG_CACHE_SIZE_KEY, 448);
-    configSetString(&gGameConfig, GAME_CONFIG_SOUND_KEY, GAME_CONFIG_MUSIC_PATH1_KEY, "sound\\music\\");
-    configSetString(&gGameConfig, GAME_CONFIG_SOUND_KEY, GAME_CONFIG_MUSIC_PATH2_KEY, "sound\\music\\");
+    configSetString(&gGameConfig, GAME_CONFIG_SOUND_KEY, GAME_CONFIG_MUSIC_PATH1_KEY, PATH_PREFIX "sound\\music\\");
+    configSetString(&gGameConfig, GAME_CONFIG_SOUND_KEY, GAME_CONFIG_MUSIC_PATH2_KEY, PATH_PREFIX "sound\\music\\");
     configSetString(&gGameConfig, GAME_CONFIG_DEBUG_KEY, GAME_CONFIG_MODE_KEY, "environment");
     configSetInt(&gGameConfig, GAME_CONFIG_DEBUG_KEY, GAME_CONFIG_SHOW_TILE_NUM_KEY, 0);
     configSetInt(&gGameConfig, GAME_CONFIG_DEBUG_KEY, GAME_CONFIG_SHOW_SCRIPT_MESSAGES_KEY, 0);
@@ -128,7 +135,7 @@ bool gameConfigInit(bool isMapper, int argc, char** argv)
         snprintf(gGameConfigFilePath, sizeof(gGameConfigFilePath), "%s\\%s", executable, GAME_CONFIG_FILE_NAME);
         *ch = '\\';
     } else {
-        strcpy(gGameConfigFilePath, GAME_CONFIG_FILE_NAME);
+        strcpy(gGameConfigFilePath, PATH_PREFIX GAME_CONFIG_FILE_NAME);
     }
 
     // Read contents of `fallout2.cfg` into config. The values from the file

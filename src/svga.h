@@ -3,6 +3,15 @@
 
 #include <SDL.h>
 
+#if defined(__3DS__)
+#include <3ds.h>
+#endif
+
+#if defined(__WII__)
+#include <wiiuse/wpad.h>
+#include <fat.h>
+#endif
+
 #include "fps_limiter.h"
 #include "geometry.h"
 
@@ -14,12 +23,22 @@ extern Rect _scr_size;
 extern void (*_scr_blit)(unsigned char* src, int src_pitch, int a3, int src_x, int src_y, int src_width, int src_height, int dest_x, int dest_y);
 extern void (*_zero_mem)();
 
-extern SDL_Window* gSdlWindow;
 extern SDL_Surface* gSdlSurface;
-extern SDL_Renderer* gSdlRenderer;
-extern SDL_Texture* gSdlTexture;
 extern SDL_Surface* gSdlTextureSurface;
 extern FpsLimiter sharedFpsLimiter;
+#if defined(__3DS__) || defined(__WII__)
+extern SDL_Surface* gSdlWindow;
+#define gSdlRenderer gSdlTextureSurface
+#define gSdlTexture gSdlTextureSurface
+#if defined(__3DS__)
+extern SDL_Surface* gSdlTopScreen;
+extern SDL_Surface* gSdlBottomScreen;
+#endif
+#else
+extern SDL_Window* gSdlWindow;
+extern SDL_Renderer* gSdlRenderer;
+extern SDL_Texture* gSdlTexture;
+#endif
 
 void mmxSetEnabled(bool a1);
 int _init_mode_320_200();

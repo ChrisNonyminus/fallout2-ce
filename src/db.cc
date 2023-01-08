@@ -238,7 +238,22 @@ size_t fileRead(void* ptr, size_t size, size_t count, File* stream)
         return totalBytesRead / size;
     }
 
-    return xfileRead(ptr, size, count, stream);
+    size_t bytesRead = xfileRead(ptr, size, count, stream);
+#if defined(__WII__)
+    if (size == 4 && count == 1) {
+        // swap endian
+        uint32_t v = *(uint32_t*)ptr;
+        v = __builtin_bswap32(v);
+        *(uint32_t*)ptr = v;
+    }
+    if (size == 2 && count == 1) {
+        // swap endian
+        uint16_t v = *(uint16_t*)ptr;
+        v = __builtin_bswap16(v);
+        *(uint16_t*)ptr = v;
+    }
+#endif
+    return bytesRead;
 }
 
 // 0x4C60B8
@@ -326,7 +341,13 @@ int fileReadInt32(File* stream, int* valuePtr)
         return -1;
     }
 
+#if !defined(__WII__)
+
     *valuePtr = ((value & 0xFF000000) >> 24) | ((value & 0xFF0000) >> 8) | ((value & 0xFF00) << 8) | ((value & 0xFF) << 24);
+#else
+    // swap endian from little to big
+    *valuePtr = value;
+#endif
 
     return 0;
 }
@@ -408,6 +429,10 @@ int fileWriteInt32(File* stream, int value)
 // 0x4C6244
 int _db_fwriteLong(File* stream, int value)
 {
+#if defined(__WII__)
+    // swap endian from big to little
+    value = ((value & 0xFF000000) >> 24) | ((value & 0xFF0000) >> 8) | ((value & 0xFF00) << 8) | ((value & 0xFF) << 24);
+#endif
     if (fileWriteInt16(stream, (value >> 16) & 0xFFFF) == -1) {
         return -1;
     }
@@ -497,10 +522,12 @@ int fileReadInt32List(File* stream, int* arr, int count)
         return -1;
     }
 
+#if !defined(__WII__)
     for (int index = 0; index < count; index++) {
         int value = arr[index];
         arr[index] = ((value & 0xFF000000) >> 24) | ((value & 0xFF0000) >> 8) | ((value & 0xFF00) << 8) | ((value & 0xFF) << 24);
     }
+#endif
 
     return 0;
 }
@@ -541,7 +568,12 @@ int fileWriteInt16List(File* stream, short* arr, int count)
 {
     for (int index = 0; index < count; index++) {
         // NOTE: Uninline.
-        if (fileWriteInt16(stream, arr[index]) == -1) {
+        short value = arr[index];
+#if defined(__WII__)
+        // swap endian from big to little
+        value = ((arr[index] & 0xFF00) >> 8) | ((arr[index] & 0xFF) << 8);
+#endif
+        if (fileWriteInt16(stream, value) == -1) {
             return -1;
         }
     }

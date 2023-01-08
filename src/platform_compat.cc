@@ -18,6 +18,11 @@
 #include <unistd.h>
 #endif
 
+#if defined(__WII__)
+#include <stdio.h>
+#include <stdlib.h>
+#endif
+
 #ifdef _WIN32
 #include <timeapi.h>
 #else
@@ -30,7 +35,19 @@ namespace fallout {
 
 int compat_stricmp(const char* string1, const char* string2)
 {
+#if defined(__WII__)
+    // strcasecmp isn't working for some reason, manually implement it instead
+    while (*string1 != '\0' && *string2 != '\0') {
+        if (tolower(*string1) != tolower(*string2)) {
+            break;
+        }
+        string1++;
+        string2++;
+    }
+    return tolower(*string1) - tolower(*string2);
+#else
     return SDL_strcasecmp(string1, string2);
+#endif
 }
 
 int compat_strnicmp(const char* string1, const char* string2, size_t size)

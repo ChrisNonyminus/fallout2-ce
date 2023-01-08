@@ -21,7 +21,11 @@ struct AudioEngineSoundBuffer {
     bool playing;
     bool looping;
     unsigned int pos;
+#if !defined(__3DS__) && !defined(__WII__)
     SDL_AudioStream* stream;
+#else
+    void* stream;
+#endif
     std::recursive_mutex mutex;
 };
 
@@ -31,7 +35,11 @@ static bool soundBufferIsValid(int soundBufferIndex);
 static void audioEngineMixin(void* userData, Uint8* stream, int length);
 
 static SDL_AudioSpec gAudioEngineSpec;
+#if !defined(__3DS__) && !defined(__WII__)
 static SDL_AudioDeviceID gAudioEngineDeviceId = -1;
+#else
+static int gAudioEngineDeviceId = -1;
+#endif
 static AudioEngineSoundBuffer gAudioEngineSoundBuffers[AUDIO_ENGINE_SOUND_BUFFERS];
 
 static bool audioEngineIsInitialized()
@@ -67,7 +75,8 @@ static void audioEngineMixin(void* userData, Uint8* stream, int length)
                     remaining = sizeof(buffer);
                 }
 
-                // TODO: Make something better than frame-by-frame convertion.
+// TODO: Make something better than frame-by-frame convertion.
+#if !defined(__3DS__) && !defined(__WII__)
                 SDL_AudioStreamPut(soundBuffer->stream, (unsigned char*)soundBuffer->data + soundBuffer->pos, srcFrameSize);
                 soundBuffer->pos += srcFrameSize;
 
@@ -77,6 +86,11 @@ static void audioEngineMixin(void* userData, Uint8* stream, int length)
                 }
 
                 SDL_MixAudioFormat(stream + pos, buffer, gAudioEngineSpec.format, bytesRead, soundBuffer->volume);
+#else
+                SDL_MixAudio(stream, (unsigned char*)soundBuffer->data + soundBuffer->pos, srcFrameSize, soundBuffer->volume);
+                soundBuffer->pos += srcFrameSize;
+                int bytesRead = srcFrameSize;
+#endif
 
                 if (soundBuffer->pos >= soundBuffer->size) {
                     if (soundBuffer->looping) {
@@ -105,13 +119,20 @@ bool audioEngineInit()
     desiredSpec.channels = 2;
     desiredSpec.samples = 1024;
     desiredSpec.callback = audioEngineMixin;
-
+#if !defined(__3DS__) && !defined(__WII__)
     gAudioEngineDeviceId = SDL_OpenAudioDevice(NULL, 0, &desiredSpec, &gAudioEngineSpec, SDL_AUDIO_ALLOW_ANY_CHANGE);
+#else
+    gAudioEngineDeviceId = SDL_OpenAudio(&desiredSpec, &gAudioEngineSpec);
+#endif
     if (gAudioEngineDeviceId == -1) {
         return false;
     }
 
+#if !defined(__3DS__) && !defined(__WII__)
     SDL_PauseAudioDevice(gAudioEngineDeviceId, 0);
+#else
+    SDL_PauseAudio(0);
+#endif
 
     return true;
 }
@@ -119,7 +140,11 @@ bool audioEngineInit()
 void audioEngineExit()
 {
     if (audioEngineIsInitialized()) {
+#if !defined(__3DS__) && !defined(__WII__)
         SDL_CloseAudioDevice(gAudioEngineDeviceId);
+#else
+        SDL_CloseAudio();
+#endif
         gAudioEngineDeviceId = -1;
     }
 
@@ -131,14 +156,23 @@ void audioEngineExit()
 void audioEnginePause()
 {
     if (audioEngineIsInitialized()) {
+#if !defined(__3DS__) && !defined(__WII__)
         SDL_PauseAudioDevice(gAudioEngineDeviceId, 1);
+#else
+        SDL_PauseAudio(1);
+#endif
     }
 }
 
 void audioEngineResume()
 {
     if (audioEngineIsInitialized()) {
+#if !defined(__3DS__) && !defined(__WII__)
         SDL_PauseAudioDevice(gAudioEngineDeviceId, 0);
+#else
+
+        SDL_PauseAudio(0);
+#endif
     }
 }
 
@@ -163,7 +197,11 @@ int audioEngineCreateSoundBuffer(unsigned int size, int bitsPerSample, int chann
             soundBuffer->looping = false;
             soundBuffer->pos = 0;
             soundBuffer->data = malloc(size);
+#if !defined(__3DS__) && !defined(__WII__)
             soundBuffer->stream = SDL_NewAudioStream(bitsPerSample == 16 ? AUDIO_S16 : AUDIO_S8, channels, rate, gAudioEngineSpec.format, gAudioEngineSpec.channels, gAudioEngineSpec.freq);
+#else
+            soundBuffer->stream = NULL;
+#endif
             return index;
         }
     }
@@ -193,7 +231,9 @@ bool audioEngineSoundBufferRelease(int soundBufferIndex)
     free(soundBuffer->data);
     soundBuffer->data = NULL;
 
+#if !defined(__3DS__) && !defined(__WII__)
     SDL_FreeAudioStream(soundBuffer->stream);
+#endif
     soundBuffer->stream = NULL;
 
     return true;

@@ -17,7 +17,7 @@ namespace fallout {
 // represent paths across the codebase.
 #define COMPAT_MAX_PATH 260
 
-#define COMPAT_MAX_DRIVE 3
+#define COMPAT_MAX_DRIVE 8
 #define COMPAT_MAX_DIR 256
 #define COMPAT_MAX_FNAME 256
 #define COMPAT_MAX_EXT 256

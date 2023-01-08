@@ -26,12 +26,20 @@ static int gMouseWheelDeltaY = 0;
 extern int screenGetWidth();
 extern int screenGetHeight();
 
+SDL_Joystick* gJoystick = nullptr;
 // 0x4E0400
 bool directInputInit()
 {
+#if !defined(__WII__) && !defined(__3DS__)
     if (SDL_InitSubSystem(SDL_INIT_EVENTS) != 0) {
         return false;
     }
+#else
+    gJoystick = SDL_JoystickOpen(0);
+    if (!gJoystick) {
+        goto err;
+    }
+#endif
 
     if (!mouseDeviceInit()) {
         goto err;
@@ -53,7 +61,9 @@ err:
 // 0x4E0478
 void directInputFree()
 {
+#if !defined(__WII__) && !defined(__3DS__)
     SDL_QuitSubSystem(SDL_INIT_EVENTS);
+#endif
 }
 
 // 0x4E04E8
@@ -106,8 +116,13 @@ bool mouseDeviceGetData(MouseData* mouseState)
         }
     } else {
         Uint32 buttons = SDL_GetRelativeMouseState(&(mouseState->x), &(mouseState->y));
+#if !defined(__WII__) && !defined(__3DS__)
         mouseState->buttons[0] = (buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
         mouseState->buttons[1] = (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
+#else
+        mouseState->buttons[0] = SDL_JoystickGetButton(gJoystick, 0) != 0 || (buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
+        mouseState->buttons[1] = SDL_JoystickGetButton(gJoystick, 1) != 0 || (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
+#endif
         mouseState->wheelX = gMouseWheelDeltaX;
         mouseState->wheelY = gMouseWheelDeltaY;
 
@@ -133,7 +148,10 @@ bool keyboardDeviceUnacquire()
 // 0x4E05FC
 bool keyboardDeviceReset()
 {
+#if !defined(__WII__) && !defined(__3DS__)
     SDL_FlushEvents(SDL_KEYDOWN, SDL_TEXTINPUT);
+#else
+#endif
     return true;
 }
 
@@ -146,7 +164,11 @@ bool keyboardDeviceGetData(KeyboardData* keyboardData)
 // 0x4E070C
 bool mouseDeviceInit()
 {
+#if !defined(__WII__) && !defined(__3DS__)
     return SDL_SetRelativeMouseMode(SDL_TRUE) == 0;
+#else
+    return true;
+#endif
 }
 
 // 0x4E078C
@@ -170,10 +192,27 @@ void handleMouseEvent(SDL_Event* event)
     // Mouse movement and buttons are accumulated in SDL itself and will be
     // processed later in `mouseDeviceGetData` via `SDL_GetRelativeMouseState`.
 
+#if !defined(__WII__) && !defined(__3DS__)
     if (event->type == SDL_MOUSEWHEEL) {
         gMouseWheelDeltaX += event->wheel.x;
         gMouseWheelDeltaY += event->wheel.y;
     }
+#else
+    // joystick hat instead maybe?
+    unsigned char hat = SDL_JoystickGetHat(gJoystick, 0);
+    if (hat & SDL_HAT_UP) {
+        gMouseWheelDeltaY += 0.5f;
+    }
+    if (hat & SDL_HAT_DOWN) {
+        gMouseWheelDeltaY -= 0.5f;
+    }
+    if (hat & SDL_HAT_LEFT) {
+        gMouseWheelDeltaX -= 0.5f;
+    }
+    if (hat & SDL_HAT_RIGHT) {
+        gMouseWheelDeltaX += 0.5f;
+    }
+#endif
 
     if (gLastInputType != INPUT_TYPE_MOUSE) {
         // Reset touch data.
@@ -194,6 +233,7 @@ void handleMouseEvent(SDL_Event* event)
 
 void handleTouchEvent(SDL_Event* event)
 {
+#if !defined(__3DS__) && !defined(__WII__)
     int windowWidth = screenGetWidth();
     int windowHeight = screenGetHeight();
 
@@ -238,6 +278,7 @@ void handleTouchEvent(SDL_Event* event)
 
         gLastInputType = INPUT_TYPE_TOUCH;
     }
+#endif
 }
 
 } // namespace fallout

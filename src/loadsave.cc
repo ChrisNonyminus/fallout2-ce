@@ -75,10 +75,10 @@ namespace fallout {
 // case-sensitive. Lowercase is preferred as it is used in other parts of the
 // codebase (see `protoInit`, `gArtListDescriptions`).
 
-#define PROTO_DIR_NAME "proto"
-#define CRITTERS_DIR_NAME "critters"
-#define ITEMS_DIR_NAME "items"
-#define PROTO_FILE_EXT "pro"
+#define PROTO_DIR_NAME PATH_PREFIX "proto"
+#define CRITTERS_DIR_NAME PATH_PREFIX "critters"
+#define ITEMS_DIR_NAME PATH_PREFIX "items"
+#define PROTO_FILE_EXT PATH_PREFIX "pro"
 
 #define LOAD_SAVE_DESCRIPTION_LENGTH (30)
 #define LOAD_SAVE_HANDLER_COUNT (27)
@@ -333,7 +333,7 @@ void _InitLoadSave()
     _slot_cursor = 0;
     _patches = settings.system.master_patches_path.c_str();
 
-    _MapDirErase("MAPS\\", "SAV");
+    _MapDirErase(PATH_PREFIX "MAPS\\", "SAV");
     _MapDirErase(PROTO_DIR_NAME "\\" CRITTERS_DIR_NAME "\\", PROTO_FILE_EXT);
     _MapDirErase(PROTO_DIR_NAME "\\" ITEMS_DIR_NAME "\\", PROTO_FILE_EXT);
 }
@@ -341,7 +341,7 @@ void _InitLoadSave()
 // 0x47B85C
 void _ResetLoadSave()
 {
-    _MapDirErase("MAPS\\", "SAV");
+    _MapDirErase(PATH_PREFIX "MAPS\\", "SAV");
     _MapDirErase(PROTO_DIR_NAME "\\" CRITTERS_DIR_NAME "\\", PROTO_FILE_EXT);
     _MapDirErase(PROTO_DIR_NAME "\\" ITEMS_DIR_NAME "\\", PROTO_FILE_EXT);
 }
@@ -358,7 +358,7 @@ int lsgSaveGame(int mode)
     _patches = settings.system.master_patches_path.c_str();
 
     if (mode == LOAD_SAVE_MODE_QUICK && _quick_done) {
-        snprintf(_gmpath, sizeof(_gmpath), "%s\\%s%.2d\\", "SAVEGAME", "SLOT", _slot_cursor + 1);
+        snprintf(_gmpath, sizeof(_gmpath), "%s\\%s%.2d\\", PATH_PREFIX "SAVEGAME", "SLOT", _slot_cursor + 1);
         strcat(_gmpath, "SAVE.DAT");
 
         _flptr = fileOpen(_gmpath, "rb");
@@ -433,7 +433,7 @@ int lsgSaveGame(int mode)
         // Save game directory:
         strcpy(_str1, getmsg(&gLoadSaveMessageList, &messageListItem, 107));
 
-        snprintf(_str2, sizeof(_str2), "\"%s\\\"", "SAVEGAME");
+        snprintf(_str2, sizeof(_str2), "\"%s\\\"", PATH_PREFIX "SAVEGAME");
 
         // TODO: Check.
         strcpy(_str2, getmsg(&gLoadSaveMessageList, &messageListItem, 108));
@@ -746,7 +746,7 @@ int lsgSaveGame(int mode)
                         // Save game directory:
                         strcpy(_str1, getmsg(&gLoadSaveMessageList, &gLoadSaveMessageListItem, 107));
 
-                        snprintf(_str2, sizeof(_str2), "\"%s\\\"", "SAVEGAME");
+                        snprintf(_str2, sizeof(_str2), "\"%s\\\"", PATH_PREFIX "SAVEGAME");
 
                         char text[260];
                         // Doesn't exist or is corrupted.
@@ -948,7 +948,7 @@ int lsgLoadGame(int mode)
         soundPlayFile("iisxxxx1");
         strcpy(_str0, getmsg(&gLoadSaveMessageList, &gLoadSaveMessageListItem, 106));
         strcpy(_str1, getmsg(&gLoadSaveMessageList, &gLoadSaveMessageListItem, 107));
-        snprintf(_str2, sizeof(_str2), "\"%s\\\"", "SAVEGAME");
+        snprintf(_str2, sizeof(_str2), "\"%s\\\"", PATH_PREFIX "SAVEGAME");
         showDialogBox(_str0, body, 2, 169, 116, _colorTable[32328], 0, _colorTable[32328], DIALOG_BOX_LARGE);
         lsgWindowFree(windowType);
         return -1;

@@ -36,6 +36,9 @@ static DebugPrintProc* gDebugPrintProc = NULL;
 // 0x4C6CD0
 void _GNW_debug_init()
 {
+#if defined(__WII__)
+    gDebugPrintProc = _win_debug;
+#endif
     atexit(_debug_exit);
 }
 
@@ -143,10 +146,9 @@ int debugPrint(const char* format, ...)
         vsnprintf(string, sizeof(string), format, args);
 
         rc = gDebugPrintProc(string);
+        printf("DEBUG: \"%s\"\n", string);
     } else {
-#ifdef _DEBUG
-        SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, format, args);
-#endif
+        vprintf(format, args);
         rc = -1;
     }
 

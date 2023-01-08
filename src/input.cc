@@ -14,6 +14,9 @@
 #include "vcr.h"
 #include "win32.h"
 
+#if defined(__WII__)
+#endif
+
 namespace fallout {
 
 typedef struct InputEvent {
@@ -1026,24 +1029,24 @@ static void buildNormalizedQwertyKeys()
     keys[SDL_SCANCODE_F13] = -1;
     keys[SDL_SCANCODE_F14] = -1;
     keys[SDL_SCANCODE_F15] = -1;
-    //keys[DIK_KANA] = -1;
-    //keys[DIK_CONVERT] = -1;
-    //keys[DIK_NOCONVERT] = -1;
-    //keys[DIK_YEN] = -1;
+    // keys[DIK_KANA] = -1;
+    // keys[DIK_CONVERT] = -1;
+    // keys[DIK_NOCONVERT] = -1;
+    // keys[DIK_YEN] = -1;
     keys[SDL_SCANCODE_KP_EQUALS] = -1;
-    //keys[DIK_PREVTRACK] = -1;
-    //keys[DIK_AT] = -1;
-    //keys[DIK_COLON] = -1;
-    //keys[DIK_UNDERLINE] = -1;
-    //keys[DIK_KANJI] = -1;
+    // keys[DIK_PREVTRACK] = -1;
+    // keys[DIK_AT] = -1;
+    // keys[DIK_COLON] = -1;
+    // keys[DIK_UNDERLINE] = -1;
+    // keys[DIK_KANJI] = -1;
     keys[SDL_SCANCODE_STOP] = -1;
-    //keys[DIK_AX] = -1;
-    //keys[DIK_UNLABELED] = -1;
+    // keys[DIK_AX] = -1;
+    // keys[DIK_UNLABELED] = -1;
     keys[SDL_SCANCODE_KP_ENTER] = SDL_SCANCODE_KP_ENTER;
     keys[SDL_SCANCODE_RCTRL] = SDL_SCANCODE_RCTRL;
     keys[SDL_SCANCODE_KP_COMMA] = -1;
     keys[SDL_SCANCODE_KP_DIVIDE] = SDL_SCANCODE_KP_DIVIDE;
-    //keys[DIK_SYSRQ] = 84;
+    // keys[DIK_SYSRQ] = 84;
     keys[SDL_SCANCODE_RALT] = SDL_SCANCODE_RALT;
     keys[SDL_SCANCODE_HOME] = SDL_SCANCODE_HOME;
     keys[SDL_SCANCODE_UP] = SDL_SCANCODE_UP;
@@ -1080,14 +1083,18 @@ void _GNW95_process_message()
         case SDL_MOUSEMOTION:
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
+#if !defined(__WII__) && !defined(__3DS__)
         case SDL_MOUSEWHEEL:
+#endif
             handleMouseEvent(&e);
             break;
+#if !defined(__WII__) && !defined(__3DS__)
         case SDL_FINGERDOWN:
         case SDL_FINGERMOTION:
         case SDL_FINGERUP:
             handleTouchEvent(&e);
             break;
+#endif
         case SDL_KEYDOWN:
         case SDL_KEYUP:
             if (!keyboardIsDisabled()) {
@@ -1096,6 +1103,7 @@ void _GNW95_process_message()
                 _GNW95_process_key(&keyboardData);
             }
             break;
+#if !defined(__WII__) && !defined(__3DS__)
         case SDL_WINDOWEVENT:
             switch (e.window.event) {
             case SDL_WINDOWEVENT_EXPOSED:
@@ -1115,6 +1123,7 @@ void _GNW95_process_message()
                 break;
             }
             break;
+#endif
         case SDL_QUIT:
             exit(EXIT_SUCCESS);
             break;
@@ -1211,12 +1220,20 @@ static void idleImpl()
 
 void beginTextInput()
 {
+#if !defined(__WII__) && !defined(__3DS__)
     SDL_StartTextInput();
+#else
+    //SDL_EnableUNICODE(1);
+#endif
 }
 
 void endTextInput()
 {
+#if !defined(__WII__) && !defined(__3DS__)
     SDL_StopTextInput();
+#else
+    //SDL_EnableUNICODE(0);
+#endif
 }
 
 } // namespace fallout

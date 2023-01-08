@@ -32,11 +32,21 @@ void (*_scr_blit)(unsigned char* src, int src_pitch, int a3, int src_x, int src_
 // 0x6ACA1C
 void (*_zero_mem)() = NULL;
 
-SDL_Window* gSdlWindow = NULL;
 SDL_Surface* gSdlSurface = NULL;
+SDL_Surface* gSdlTextureSurface = NULL;
+
+#if !defined(__3DS__) && !defined(__WII__)
+SDL_Window* gSdlWindow = NULL;
 SDL_Renderer* gSdlRenderer = NULL;
 SDL_Texture* gSdlTexture = NULL;
-SDL_Surface* gSdlTextureSurface = NULL;
+#else
+SDL_Surface* gSdlWindow = NULL;
+#endif
+
+#if defined(__3DS__)
+SDL_Surface* gSdlTopScreen = NULL;
+SDL_Surface* gSdlBottomScreen = NULL;
+#endif
 
 // TODO: Remove once migration to update-render cycle is completed.
 FpsLimiter sharedFpsLimiter;
@@ -185,19 +195,33 @@ int _init_vesa_mode(int width, int height)
 int _GNW95_init_window(int width, int height, bool fullscreen)
 {
     if (gSdlWindow == NULL) {
+#if !defined(__3DS__) && !defined(__WII__)
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+#endif
 
-        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) != 0) {
             return -1;
         }
+        SDL_ShowCursor(SDL_DISABLE);
+
+#if !defined(__3DS__) && !defined(__WII__)
 
         Uint32 windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
 
         if (fullscreen) {
             windowFlags |= SDL_WINDOW_FULLSCREEN;
         }
-
         gSdlWindow = SDL_CreateWindow(gProgramWindowTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, windowFlags);
+#else
+#if defined(__3DS__)
+        gSdlWindow = SDL_SetVideoMode(400, 480, 8, SDL_HWSURFACE | SDL_FULLSCREEN | SDL_DUALSCR | SDL_DOUBLEBUF);
+        gSdlTopScreen = SDL_CreateRGBSurface(0, 400, 240, 8, 0, 0, 0, 0);
+        gSdlBottomScreen = SDL_CreateRGBSurface(0, 320, 240, 8, 0, 0, 0, 0);
+
+#else
+        gSdlWindow = SDL_SetVideoMode(640, 480, 8, SDL_HWSURFACE | SDL_FULLSCREEN | SDL_DOUBLEBUF);
+#endif
+#endif
         if (gSdlWindow == NULL) {
             return -1;
         }
@@ -205,7 +229,12 @@ int _GNW95_init_window(int width, int height, bool fullscreen)
         if (!createRenderer(width, height)) {
             destroyRenderer();
 
+#if !defined(__3DS__) && !defined(__WII__)
+
             SDL_DestroyWindow(gSdlWindow);
+#else
+            SDL_Quit();
+#endif
             gSdlWindow = NULL;
 
             return -1;
@@ -238,10 +267,21 @@ int directDrawInit(int width, int height, int bpp)
         colors[index].r = index;
         colors[index].g = index;
         colors[index].b = index;
+#if !defined(__3DS__) && !defined(__WII__)
         colors[index].a = 255;
+#endif
     }
+#if !defined(__3DS__) && !defined(__WII__)
 
     SDL_SetPaletteColors(gSdlSurface->format->palette, colors, 0, 256);
+#else
+    SDL_SetColors(gSdlSurface, colors, 0, 256);
+    SDL_SetColors(gSdlWindow, colors, 0, 256);
+#if defined(__3DS__)
+    SDL_SetColors(gSdlTopScreen, colors, 0, 256);
+    SDL_SetColors(gSdlBottomScreen, colors, 0, 256);
+#endif
+#endif
 
     return 0;
 }
@@ -251,10 +291,15 @@ void directDrawFree()
 {
     if (gSdlSurface != NULL) {
         SDL_FreeSurface(gSdlSurface);
+#if defined(__3DS__)
+        SDL_FreeSurface(gSdlTopScreen);
+        SDL_FreeSurface(gSdlBottomScreen);
+#endif
         gSdlSurface = NULL;
     }
 }
 
+SDL_Rect BTM_OFFSET = { 0, 240 };
 // 0x4CB310
 void directDrawSetPaletteInRange(unsigned char* palette, int start, int count)
 {
@@ -266,12 +311,30 @@ void directDrawSetPaletteInRange(unsigned char* palette, int start, int count)
                 colors[index].r = palette[index * 3] << 2;
                 colors[index].g = palette[index * 3 + 1] << 2;
                 colors[index].b = palette[index * 3 + 2] << 2;
+#if !defined(__3DS__) && !defined(__WII__)
                 colors[index].a = 255;
+#endif
             }
         }
 
+#if !defined(__3DS__) && !defined(__WII__)
         SDL_SetPaletteColors(gSdlSurface->format->palette, colors, start, count);
+#else
+        SDL_SetColors(gSdlSurface, colors, start, count);
+        SDL_SetColors(gSdlWindow, colors, start, count);
+#if defined(__3DS__)
+        SDL_SetColors(gSdlTopScreen, colors, start, count);
+        SDL_SetColors(gSdlBottomScreen, colors, start, count);
+#endif
+#endif
+#if defined(__3DS__)
+        SDL_BlitSurface(gSdlTopScreen, NULL, gSdlTextureSurface, NULL);
+        SDL_BlitSurface(gSdlBottomScreen, NULL, gSdlTextureSurface, &BTM_OFFSET);
+#else
+
         SDL_BlitSurface(gSdlSurface, NULL, gSdlTextureSurface, NULL);
+
+#endif
     }
 }
 
@@ -285,11 +348,27 @@ void directDrawSetPalette(unsigned char* palette)
             colors[index].r = palette[index * 3] << 2;
             colors[index].g = palette[index * 3 + 1] << 2;
             colors[index].b = palette[index * 3 + 2] << 2;
+#if !defined(__3DS__) && !defined(__WII__)
             colors[index].a = 255;
+#endif
         }
 
+#if !defined(__3DS__) && !defined(__WII__)
         SDL_SetPaletteColors(gSdlSurface->format->palette, colors, 0, 256);
+#else
+        SDL_SetColors(gSdlSurface, colors, 0, 256);
+        SDL_SetColors(gSdlWindow, colors, 0, 256);
+#if defined(__3DS__)
+        SDL_SetColors(gSdlTopScreen, colors, 0, 256);
+        SDL_SetColors(gSdlBottomScreen, colors, 0, 256);
+#endif
+#endif
+#if defined(__3DS__)
+        SDL_BlitSurface(gSdlTopScreen, NULL, gSdlTextureSurface, NULL);
+        SDL_BlitSurface(gSdlBottomScreen, NULL, gSdlTextureSurface, &BTM_OFFSET);
+#else
         SDL_BlitSurface(gSdlSurface, NULL, gSdlTextureSurface, NULL);
+#endif
     }
 }
 
@@ -316,7 +395,12 @@ unsigned char* directDrawGetPalette()
 // 0x4CB850
 void _GNW95_ShowRect(unsigned char* src, int srcPitch, int a3, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY)
 {
+#if !defined(__3DS__)
+
     blitBufferToBuffer(src + srcPitch * srcY + srcX, srcWidth, srcHeight, srcPitch, (unsigned char*)gSdlSurface->pixels + gSdlSurface->pitch * destY + destX, gSdlSurface->pitch);
+#else
+    blitBufferToBuffer(src + srcPitch * srcY + srcX, srcWidth, srcHeight, srcPitch, (unsigned char*)gSdlTopScreen->pixels + gSdlTopScreen->pitch * destY + destX, gSdlTopScreen->pitch);
+#endif
 
     SDL_Rect srcRect;
     srcRect.x = destX;
@@ -327,7 +411,17 @@ void _GNW95_ShowRect(unsigned char* src, int srcPitch, int a3, int srcX, int src
     SDL_Rect destRect;
     destRect.x = destX;
     destRect.y = destY;
+
+
+#if defined(__3DS__)
+    SDL_BlitSurface(gSdlTopScreen, &srcRect, gSdlTextureSurface, &destRect);
+    SDL_BlitSurface(gSdlBottomScreen, &srcRect, gSdlTextureSurface, &destRect);
+#else
+
     SDL_BlitSurface(gSdlSurface, &srcRect, gSdlTextureSurface, &destRect);
+
+#endif
+
 }
 
 // Clears drawing surface.
@@ -339,13 +433,27 @@ void _GNW95_zero_vid_mem()
         return;
     }
 
+#if defined(__3DS__)
+    for (int y = 0; y < gSdlTopScreen->h; y++) {
+        memset(gSdlTopScreen->pixels + gSdlTopScreen->pitch * y, 0, gSdlTopScreen->w);
+    }
+    for (int y = 0; y < gSdlBottomScreen->h; y++) {
+        memset(gSdlBottomScreen->pixels + gSdlBottomScreen->pitch * y, 0, gSdlBottomScreen->w);
+    }
+    SDL_BlitSurface(gSdlTopScreen, NULL, gSdlTextureSurface, NULL);
+    SDL_BlitSurface(gSdlBottomScreen, NULL, gSdlTextureSurface, &BTM_OFFSET);
+#else
+
     unsigned char* surface = (unsigned char*)gSdlSurface->pixels;
     for (int y = 0; y < gSdlSurface->h; y++) {
         memset(surface, 0, gSdlSurface->w);
         surface += gSdlSurface->pitch;
     }
 
+
     SDL_BlitSurface(gSdlSurface, NULL, gSdlTextureSurface, NULL);
+
+#endif
 }
 
 int screenGetWidth()
@@ -372,6 +480,7 @@ int screenGetVisibleHeight()
 
 static bool createRenderer(int width, int height)
 {
+#if !defined(__3DS__) && !defined(__WII__)
     gSdlRenderer = SDL_CreateRenderer(gSdlWindow, -1, 0);
     if (gSdlRenderer == NULL) {
         return false;
@@ -395,17 +504,24 @@ static bool createRenderer(int width, int height)
     if (gSdlTextureSurface == NULL) {
         return false;
     }
+#else
+    gSdlTextureSurface = gSdlWindow;
+    if (gSdlTextureSurface == NULL) {
+        return false;
+    }
+#endif
 
     return true;
 }
 
 static void destroyRenderer()
 {
+
+#if !defined(__3DS__) && !defined(__WII__)
     if (gSdlTextureSurface != NULL) {
         SDL_FreeSurface(gSdlTextureSurface);
         gSdlTextureSurface = NULL;
     }
-
     if (gSdlTexture != NULL) {
         SDL_DestroyTexture(gSdlTexture);
         gSdlTexture = NULL;
@@ -415,6 +531,7 @@ static void destroyRenderer()
         SDL_DestroyRenderer(gSdlRenderer);
         gSdlRenderer = NULL;
     }
+#endif
 }
 
 void handleWindowSizeChanged()
@@ -425,10 +542,31 @@ void handleWindowSizeChanged()
 
 void renderPresent()
 {
+#if !defined(__3DS__) && !defined(__WII__)
     SDL_UpdateTexture(gSdlTexture, NULL, gSdlTextureSurface->pixels, gSdlTextureSurface->pitch);
     SDL_RenderClear(gSdlRenderer);
     SDL_RenderCopy(gSdlRenderer, gSdlTexture, NULL, NULL);
     SDL_RenderPresent(gSdlRenderer);
+#else
+#if defined(__WII__)
+    // // debug: blit gSDLSurface to gSdlTextureSurface
+    // SDL_BlitSurface(gSdlSurface, NULL, gSdlTextureSurface, NULL);
+
+    // debug: save bmps
+    SDL_SaveBMP(gSdlTextureSurface, "sd:/gSdlTextureSurface.bmp");
+    SDL_SaveBMP(gSdlWindow, "sd:/gSdlWindow.bmp");
+    SDL_SaveBMP(gSdlSurface, "sd:/gSdlSurface.bmp");
+
+    SDL_Flip(gSdlWindow);
+
+    // // copy from texture surface to screen surface, convert to 16-bit
+    // SDL_LockSurface(gSdlWindow);
+    // SDL_Surface* converted = SDL_DisplayFormat(gSdlTextureSurface);
+    // SDL_BlitSurface(converted, NULL, gSdlWindow, NULL);
+    // SDL_FreeSurface(converted);
+    // SDL_UnlockSurface(gSdlWindow);
+#endif
+#endif
 }
 
 } // namespace fallout

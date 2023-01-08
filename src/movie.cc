@@ -324,7 +324,13 @@ static void movieDirectImpl(SDL_Surface* surface, int srcWidth, int srcHeight, i
     // TODO: This is a super-ugly hack. The reason is that surfaces managed by
     // MVE does not have palette. If we blit from these internal surfaces into
     // backbuffer surface (with palette set), all we get is shiny white box.
+
+#if !defined(__WII__) && !defined(__3DS__)
     SDL_SetSurfacePalette(surface, gSdlSurface->format->palette);
+#else
+    SDL_SetColors(surface, gSdlSurface->format->palette->colors, 0, 256);
+    SDL_SetColors(gSdlWindow, gSdlSurface->format->palette->colors, 0, 256);
+#endif
     SDL_BlitSurface(surface, &srcRect, gSdlSurface, &destRect);
     SDL_BlitSurface(gSdlSurface, NULL, gSdlTextureSurface, NULL);
     renderPresent();

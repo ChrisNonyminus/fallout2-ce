@@ -15,6 +15,8 @@ typedef enum GameState {
     GAME_STATE_5,
 } GameState;
 
+#define FOURCC(a, b, c, d) ((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
+
 extern int* gGameGlobalVars;
 extern int gGameGlobalVarsLength;
 extern const char* asc_5186C8;

@@ -7,6 +7,9 @@
 
 #include "svga.h"
 
+#define FOURCC(a, b, c, d) ((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
+
+
 namespace fallout {
 
 #define COLOR_PALETTE_STACK_CAPACITY 16
@@ -439,7 +442,7 @@ bool colorPaletteLoad(const char* path)
 
     // NOTE: The value is "NEWC". Original code uses cmp opcode, not stricmp,
     // or comparing characters one-by-one.
-    if (type == 'NEWC') {
+    if (type == FOURCC('N', 'E', 'W', 'C')) {
         // NOTE: Uninline.
         colorPaletteFileRead(fd, intensityColorTable, sizeof(intensityColorTable));
 

@@ -14,6 +14,11 @@
 #include "settings.h"
 #include "sfall_config.h"
 
+#if defined(__WII__)
+#include <ogc/machine/asm.h>
+#include <ogc/machine/processor.h>
+#endif
+
 namespace fallout {
 
 typedef struct ArtListDescription {
@@ -138,6 +143,10 @@ int artInit()
         return -1;
     }
 
+#if defined(__WII__)
+    debugPrint("art_init: cache initialized to size %d\n", cacheSize);
+#endif
+
     const char* language = settings.system.language.c_str();
     if (compat_stricmp(language, ENGLISH) != 0) {
         strcpy(gArtLanguage, language);
@@ -156,6 +165,10 @@ int artInit()
         }
     }
 
+#if defined(__WII__)
+    debugPrint("art_init: art lists read\n");
+#endif
+
     _anon_alias = (int*)internal_malloc(sizeof(*_anon_alias) * gArtListDescriptions[OBJ_TYPE_CRITTER].fileNamesLength);
     if (_anon_alias == NULL) {
         gArtListDescriptions[OBJ_TYPE_CRITTER].fileNamesLength = 0;
@@ -164,6 +177,10 @@ int artInit()
         return -1;
     }
 
+#if defined(__WII__)
+    debugPrint("art_init: anon_alias allocated\n");
+#endif
+
     gArtCritterFidShoudRunData = (int*)internal_malloc(sizeof(*gArtCritterFidShoudRunData) * gArtListDescriptions[1].fileNamesLength);
     if (gArtCritterFidShoudRunData == NULL) {
         gArtListDescriptions[OBJ_TYPE_CRITTER].fileNamesLength = 0;
@@ -171,6 +188,10 @@ int artInit()
         cacheFree(&gArtCache);
         return -1;
     }
+
+#if defined(__WII__)
+    debugPrint("art_init: artCritterFidShouldRunData allocated\n");
+#endif
 
     for (int critterIndex = 0; critterIndex < gArtListDescriptions[OBJ_TYPE_CRITTER].fileNamesLength; critterIndex++) {
         gArtCritterFidShoudRunData[critterIndex] = 0;
@@ -184,6 +205,10 @@ int artInit()
         cacheFree(&gArtCache);
         return -1;
     }
+
+#if defined(__WII__)
+    debugPrint("art_init: critter.lst opened\n");
+#endif
 
     // SFALL: Modify player model settings.
     char* jumpsuitMaleFileName = NULL;
@@ -267,6 +292,11 @@ int artInit()
         return -1;
     }
 
+#if defined(__WII__)
+    debugPrint("Allocated %d bytes for head_info in art_init\n", sizeof(*gHeadDescriptions) * gArtListDescriptions[OBJ_TYPE_HEAD].fileNamesLength);
+    debugPrint("Loading head info from %sart\\%s\\%s.lst", _cd_path_base, gArtListDescriptions[OBJ_TYPE_HEAD].name, gArtListDescriptions[OBJ_TYPE_HEAD].name);
+#endif
+
     snprintf(path, sizeof(path), "%s%s%s\\%s.lst", _cd_path_base, "art\\", gArtListDescriptions[OBJ_TYPE_HEAD].name, gArtListDescriptions[OBJ_TYPE_HEAD].name);
 
     stream = fileOpen(path, "rt");
@@ -275,6 +305,10 @@ int artInit()
         cacheFree(&gArtCache);
         return -1;
     }
+
+#if defined(__WII__)
+    debugPrint("OK");
+#endif
 
     for (int headIndex = 0; headIndex < gArtListDescriptions[OBJ_TYPE_HEAD].fileNamesLength; headIndex++) {
         if (!fileReadString(string, sizeof(string), stream)) {
@@ -479,18 +513,27 @@ unsigned char* artLockFrameDataReturningSize(int fid, CacheEntry** handlePtr, in
     cacheLock(&gArtCache, fid, (void**)&art, handlePtr);
 
     if (art == NULL) {
+#if defined(__WII__)
+        debugPrint("artLockFrameDataReturningSize: art == NULL, fid = %d\n", fid);
+#endif
         return NULL;
     }
 
     // NOTE: Uninline.
     *widthPtr = artGetWidth(art, 0, 0);
     if (*widthPtr == -1) {
+#if defined(__WII__)
+        debugPrint("artLockFrameDataReturningSize: artGetWidth == -1, fid = %d\n", fid);
+#endif
         return NULL;
     }
 
     // NOTE: Uninline.
     *heightPtr = artGetHeight(art, 0, 0);
     if (*heightPtr == -1) {
+#if defined(__WII__)
+        debugPrint("artLockFrameDataReturningSize: artGetHeight == -1, fid = %d\n", fid);
+#endif
         return NULL;
     }
 
@@ -667,6 +710,7 @@ static int artReadList(const char* path, char** artListPtr, int* artListSizePtr)
 
     int count = 0;
     char string[200];
+
     while (fileReadString(string, sizeof(string), stream)) {
         count++;
     }
@@ -674,6 +718,12 @@ static int artReadList(const char* path, char** artListPtr, int* artListSizePtr)
     fileSeek(stream, 0, SEEK_SET);
 
     *artListSizePtr = count;
+
+#if defined(__WII__)
+    debugPrint("artReadList:\npath: %s\n", path);
+    debugPrint("count: %d\n", count);
+
+#endif
 
     char* artList = (char*)internal_malloc(13 * count);
     *artListPtr = artList;
@@ -822,14 +872,28 @@ unsigned char* artGetFrameData(Art* art, int frame, int direction)
 ArtFrame* artGetFrame(Art* art, int frame, int rotation)
 {
     if (rotation < 0 || rotation >= 6) {
+#if defined(__WII__)
+        debugPrint("artGetFrame: invalid rotation %d\n", rotation);
+#endif
         return NULL;
     }
 
     if (art == NULL) {
+#if defined(__WII__)
+        debugPrint("artGetFrame: art is NULL\n");
+#endif
         return NULL;
     }
 
     if (frame < 0 || frame >= art->frameCount) {
+#if defined(__WII__)
+        debugPrint("artGetFrame: invalid frame %d\n", frame);
+        debugPrint("artGetFrame: art %p\n", art);
+        debugPrint("artGetFrame: art->frameCount %d\n", art->frameCount);
+        debugPrint("artGetFrame: art->dataOffsets[rotation] %d\n", art->dataOffsets[rotation]);
+        debugPrint("artGetFrame: frm %p\n", (ArtFrame*)((unsigned char*)art + sizeof(*art) + art->dataOffsets[rotation]));
+
+#endif
         return NULL;
     }
 

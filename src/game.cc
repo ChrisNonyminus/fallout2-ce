@@ -148,6 +148,10 @@ int gameInitWithOptions(const char* windowTitle, bool isMapper, int font, int a4
     _initWindow(1, a4);
     paletteInit();
 
+#if defined(__WII__)
+    printf("[WII] Initialized palette\n");
+#endif
+
     const char* language = settings.system.language.c_str();
     if (compat_stricmp(language, FRENCH) == 0) {
         keyboardSetLayout(KEYBOARD_LAYOUT_FRENCH);
@@ -158,6 +162,10 @@ int gameInitWithOptions(const char* windowTitle, bool isMapper, int font, int a4
     } else if (compat_stricmp(language, SPANISH) == 0) {
         keyboardSetLayout(KEYBOARD_LAYOUT_SPANISH);
     }
+
+#if defined(__WII__)
+    printf("[WII] Initialized keyboard layout\n");
+#endif
 
     // SFALL: Allow to skip splash screen
     int skipOpeningMovies = 0;
@@ -1314,9 +1322,12 @@ static int gameDbInit()
     }
 
     for (patch_index = 0; patch_index < 1000; patch_index++) {
-        snprintf(filename, sizeof(filename), "patch%03d.dat", patch_index);
+        snprintf(filename, sizeof(filename), PATH_PREFIX "patch%03d.dat", patch_index);
 
         if (access(filename, 0) == 0) {
+#if defined(__WII__)
+            printf("Loading patch %s\n", filename);
+#endif
             dbOpen(filename, 0, NULL, 1);
         }
     }
@@ -1365,7 +1376,7 @@ static void showSplash()
 
     int version;
     fileReadInt32(stream, &version);
-    if (version != 'RIX3') {
+    if (version != FOURCC('R', 'I', 'X', '3')) {
         fileClose(stream);
         return;
     }

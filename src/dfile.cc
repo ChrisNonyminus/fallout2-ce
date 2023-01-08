@@ -11,6 +11,12 @@
 
 #include "platform_compat.h"
 
+#if defined(__WII__)
+#include <ogc/machine/asm.h>
+#include <ogc/machine/processor.h>
+
+#endif
+
 namespace fallout {
 
 // The size of decompression buffer for reading compressed [DFile]s.
@@ -52,12 +58,18 @@ DBase* dbaseOpen(const char* filePath)
 
     FILE* stream = compat_fopen(filePath, "rb");
     if (stream == NULL) {
+#if defined(__WII__)
+        printf("Failed to open %s at %s:%d\n", filePath, __FILE__, __LINE__);
+#endif
         return NULL;
     }
 
     DBase* dbase = (DBase*)malloc(sizeof(*dbase));
     if (dbase == NULL) {
         fclose(stream);
+#if defined(__WII__)
+        printf("Failed to allocate memory for %s at %s:%d\n", filePath, __FILE__, __LINE__);
+#endif
         return NULL;
     }
 
@@ -67,14 +79,26 @@ DBase* dbaseOpen(const char* filePath)
     // 32-bits ints.
     int fileSize = getFileSize(stream);
     if (fseek(stream, fileSize - sizeof(int) * 2, SEEK_SET) != 0) {
+#if defined(__WII__)
+        printf("Failed to seek to footer of %s at %s:%d\n", filePath, __FILE__, __LINE__);
+#endif
         goto err;
     }
 
     // Read the size of entries table.
     int entriesDataSize;
     if (fread(&entriesDataSize, sizeof(entriesDataSize), 1, stream) != 1) {
+#if defined(__WII__)
+        printf("Failed to read entries data size of %s at %s:%d\n", filePath, __FILE__, __LINE__);
+        printf("File position was: %d\n", ftell(stream));
+#endif
         goto err;
     }
+
+#if defined(__WII__)
+    // swap endian
+    entriesDataSize = __lwbrx(&entriesDataSize, 0);
+#endif
 
     // Read the size of entire dbase content.
     //
@@ -82,20 +106,47 @@ DBase* dbaseOpen(const char* filePath)
     // the beginning of the .DAT file.
     int dbaseDataSize;
     if (fread(&dbaseDataSize, sizeof(dbaseDataSize), 1, stream) != 1) {
+#if defined(__WII__)
+        printf("Failed to read dbase data size of %s at %s:%d\n", filePath, __FILE__, __LINE__);
+        printf("File position was: %d\n", ftell(stream));
+#endif
         goto err;
     }
 
+#if defined(__WII__)
+    // swap endian
+    dbaseDataSize = __lwbrx(&dbaseDataSize, 0);
+#endif
+
     // Reposition stream to the beginning of the entries table.
     if (fseek(stream, fileSize - entriesDataSize - sizeof(int) * 2, SEEK_SET) != 0) {
+#if defined(__WII__)
+        printf("Failed to seek to entries table of %s at %s:%d\n", filePath, __FILE__, __LINE__);
+        printf("File position was: %d\n", ftell(stream));
+        printf("entriesDataSize: %d (0x%08X)\n", entriesDataSize, entriesDataSize);
+#endif
         goto err;
     }
 
     if (fread(&(dbase->entriesLength), sizeof(dbase->entriesLength), 1, stream) != 1) {
+#if defined(__WII__)
+        printf("Failed to read entries length of %s at %s:%d\n", filePath, __FILE__, __LINE__);
+        printf("File position was: %d\n", ftell(stream));
+#endif
         goto err;
     }
 
+#if defined(__WII__)
+    // swap endian
+    dbase->entriesLength = __lwbrx(&dbase->entriesLength, 0);
+#endif
+
     dbase->entries = (DBaseEntry*)malloc(sizeof(*dbase->entries) * dbase->entriesLength);
     if (dbase->entries == NULL) {
+#if defined(__WII__)
+        printf("Failed to allocate entries of %s at %s:%d\n", filePath, __FILE__, __LINE__);
+        printf("dbase->entriesLength: %d (0x%08X)\n", dbase->entriesLength, dbase->entriesLength);
+#endif
         goto err;
     }
 
@@ -110,6 +161,12 @@ DBase* dbaseOpen(const char* filePath)
         if (fread(&pathLength, sizeof(pathLength), 1, stream) != 1) {
             break;
         }
+
+#if defined(__WII__)
+        // swap endian
+        pathLength = __lwbrx(&pathLength, 0);
+#endif
+
 
         entry->path = (char*)malloc(pathLength + 1);
         if (entry->path == NULL) {
@@ -130,18 +187,39 @@ DBase* dbaseOpen(const char* filePath)
             break;
         }
 
+#if defined(__WII__)
+        // swap endian
+        entry->uncompressedSize = __lwbrx(&entry->uncompressedSize, 0);
+#endif
+
         if (fread(&(entry->dataSize), sizeof(entry->dataSize), 1, stream) != 1) {
             break;
         }
 
+#if defined(__WII__)
+        // swap endian
+        entry->dataSize = __lwbrx(&entry->dataSize, 0);
+#endif
+
         if (fread(&(entry->dataOffset), sizeof(entry->dataOffset), 1, stream) != 1) {
             break;
         }
+
+#if defined(__WII__)
+        // swap endian
+        entry->dataOffset = __lwbrx(&entry->dataOffset, 0);
+#endif
     }
 
     if (entryIndex < dbase->entriesLength) {
         // We haven't reached the end, which means there was an error while
         // reading entries.
+#if defined(__WII__)
+        printf("Failed to read entry %d of %s at %s:%d\n", entryIndex, filePath, __FILE__, __LINE__);
+        printf("File position was: %d\n", ftell(stream));
+        printf("dbase->entriesLength: %d (0x%08X)\n", dbase->entriesLength, dbase->entriesLength);
+        printf("entriesDataSize: %d (0x%08X)\n", entriesDataSize, entriesDataSize);
+#endif
         goto err;
     }
 
@@ -634,10 +712,16 @@ static DFile* dfileOpenInternal(DBase* dbase, const char* filePath, const char* 
 {
     DBaseEntry* entry = (DBaseEntry*)bsearch(filePath, dbase->entries, dbase->entriesLength, sizeof(*dbase->entries), dbaseFindEntryByFilePath);
     if (entry == NULL) {
+#if 0
+        printf("dfileOpenInternal: file not found: %s (mode: %s)\n", filePath, mode);
+#endif
         goto err;
     }
 
     if (mode[0] != 'r') {
+#if 0
+        printf("dfileOpenInternal: unsupported mode: %s (file: %s)\n", mode, filePath);
+#endif
         goto err;
     }
 
@@ -653,6 +737,9 @@ static DFile* dfileOpenInternal(DBase* dbase, const char* filePath, const char* 
         dbase->dfileHead = dfile;
     } else {
         if (dbase != dfile->dbase) {
+#if 0
+            printf("dfileOpenInternal: dbase mismatch (file: %s)\n", filePath);
+#endif
             goto err;
         }
 
@@ -671,11 +758,17 @@ static DFile* dfileOpenInternal(DBase* dbase, const char* filePath, const char* 
     // Open stream to .DAT file.
     dfile->stream = compat_fopen(dbase->path, "rb");
     if (dfile->stream == NULL) {
+#if 0
+        printf("dfileOpenInternal: failed to open file: %s (mode: %s)\n", dbase->path, mode);
+#endif
         goto err;
     }
 
     // Relocate stream to the beginning of data for specified entry.
     if (fseek(dfile->stream, dbase->dataOffset + entry->dataOffset, SEEK_SET) != 0) {
+#if 0
+        printf("dfileOpenInternal: failed to seek to data offset: %s (mode: %s)\n", dbase->path, mode);
+#endif
         goto err;
     }
 
@@ -687,11 +780,17 @@ static DFile* dfileOpenInternal(DBase* dbase, const char* filePath, const char* 
         if (dfile->decompressionStream == NULL) {
             dfile->decompressionStream = (z_streamp)malloc(sizeof(*dfile->decompressionStream));
             if (dfile->decompressionStream == NULL) {
+#if 0
+                printf("dfileOpenInternal: failed to allocate decompression stream: %s (mode: %s)\n", dbase->path, mode);
+#endif
                 goto err;
             }
 
             dfile->decompressionBuffer = (unsigned char*)malloc(DFILE_DECOMPRESSION_BUFFER_SIZE);
             if (dfile->decompressionBuffer == NULL) {
+#if 0
+                printf("dfileOpenInternal: failed to allocate decompression buffer: %s (mode: %s)\n", dbase->path, mode);
+#endif
                 goto err;
             }
         }
@@ -703,6 +802,12 @@ static DFile* dfileOpenInternal(DBase* dbase, const char* filePath, const char* 
         dfile->decompressionStream->avail_in = 0;
 
         if (inflateInit(dfile->decompressionStream) != Z_OK) {
+#if defined0
+            printf("dfileOpenInternal: failed to initialize decompression stream: %s (mode: %s)\n", dbase->path, mode);
+            printf("dfileOpenInternal: entry->compressed: %d\n", entry->compressed);
+            printf("dfileOpenInternal: entry->dataOffset: %d\n", entry->dataOffset);
+            printf("dfileOpenInternal: entry->dataSize: %d\n", entry->dataSize);
+#endif
             goto err;
         }
     } else {
@@ -727,7 +832,12 @@ static DFile* dfileOpenInternal(DBase* dbase, const char* filePath, const char* 
     return dfile;
 
 err:
-
+#if 0
+    // printf("dfileOpenInternal: dbase->entriesLength: %d\n", dbase->entriesLength);
+    // for (int i = 0; i < dbase->entriesLength; i++) {
+    //     printf("\tdfileOpenInternal: dbase->entries[%d].path: %s\n", i, dbase->entries[i].path);
+    // }
+#endif
     if (dfile != NULL) {
         dfileClose(dfile);
     }

@@ -85,35 +85,70 @@ int soundEffectsCacheInit(int cacheSize, const char* effectsPath)
 
     gSoundEffectsCacheEffectsPath = internal_strdup(effectsPath);
     if (gSoundEffectsCacheEffectsPath == NULL) {
+#if defined(__WII__)
+        printf ("internal_strdup failed for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
         return -1;
     }
 
+#if defined(__WII__)
+    printf ("soundEffectsCacheInit for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
+
     if (soundEffectsListInit(gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel) != SFXL_OK) {
+#if defined(__WII__)
+        printf ("soundEffectsListInit failed for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
         internal_free(gSoundEffectsCacheEffectsPath);
         return -1;
     }
 
+#if defined(__WII__)
+    printf ("soundEffectsListInit OK for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
+
     if (soundEffectsCacheCreateHandles() != 0) {
+#if defined(__WII__)
+        printf ("soundEffectsCacheCreateHandles failed for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
         soundEffectsListExit();
         internal_free(gSoundEffectsCacheEffectsPath);
         return -1;
     }
 
+#if defined(__WII__)
+    printf ("soundEffectsCacheCreateHandles OK for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
+
     gSoundEffectsCache = (Cache*)internal_malloc(sizeof(*gSoundEffectsCache));
     if (gSoundEffectsCache == NULL) {
+#if defined(__WII__)
+        printf ("gSoundEffectsCache malloc failed for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
         soundEffectsCacheFreeHandles();
         soundEffectsListExit();
         internal_free(gSoundEffectsCacheEffectsPath);
         return -1;
     }
 
+#if defined(__WII__)
+    printf ("gSoundEffectsCache malloc OK for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
+
     if (!cacheInit(gSoundEffectsCache, soundEffectsCacheGetFileSizeImpl, soundEffectsCacheReadDataImpl, soundEffectsCacheFreeImpl, cacheSize)) {
+#if defined(__WII__)
+        printf ("cacheInit failed for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
         internal_free(gSoundEffectsCache);
         soundEffectsCacheFreeHandles();
         soundEffectsListExit();
         internal_free(gSoundEffectsCacheEffectsPath);
         return -1;
     }
+
+#if defined(__WII__)
+    printf ("cacheInit OK for %s (cmpr=%d, debug=%d)\n", gSoundEffectsCacheEffectsPath, _sfxc_cmpr, gSoundEffectsCacheDebugLevel);
+#endif
 
     gSoundEffectsCacheInitialized = true;
 

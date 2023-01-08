@@ -8,6 +8,13 @@
 #include "memory.h"
 #include "platform_compat.h"
 
+
+#if defined(__WII__)
+#include <ogc/machine/asm.h>
+#include <ogc/machine/processor.h>
+
+#endif
+
 namespace fallout {
 
 // The maximum number of text fonts.
@@ -107,6 +114,9 @@ static TextFontDescriptor* gCurrentTextFontDescriptor;
 int textFontsInit()
 {
     int currentFont = -1;
+#if defined(__WII__)
+    int fontCount = 0;
+#endif
 
     FontManager fontManager;
     memcpy(&fontManager, &gTextFontManager, sizeof(fontManager));
@@ -117,15 +127,25 @@ int textFontsInit()
         } else {
             if (currentFont == -1) {
                 currentFont = font;
+#if defined(__WII__)
+                fontCount++;
+#endif
             }
         }
     }
+
+#if defined(__WII__)
+    printf("Loaded %d fonts\n", fontCount);
+#endif
 
     if (currentFont == -1) {
         return -1;
     }
 
     if (fontManagerAdd(&fontManager) == -1) {
+#if defined(__WII__)
+        printf("Failed to add font manager\n");
+#endif
         return -1;
     }
 
@@ -152,7 +172,11 @@ int textFontLoad(int font)
     int rc = -1;
 
     char path[COMPAT_MAX_PATH];
+#if defined(__WII__)
+    snprintf(path, sizeof(path), "FONT%d.FON", font);
+#else
     snprintf(path, sizeof(path), "font%d.fon", font);
+#endif
 
     // NOTE: Original code is slightly different. It uses deep nesting and
     // unwinds everything from the point of failure.
@@ -181,26 +205,58 @@ int textFontLoad(int font)
 
     textFontDescriptor->glyphs = (TextFontGlyph*)internal_malloc(textFontDescriptor->glyphCount * sizeof(TextFontGlyph));
     if (textFontDescriptor->glyphs == NULL) {
+#if defined(__WII__)
+        printf("Failed to allocate glyphs for font %d\n", font);
+#endif
         goto out;
     }
 
     if (fileRead(textFontDescriptor->glyphs, sizeof(TextFontGlyph), textFontDescriptor->glyphCount, stream) != textFontDescriptor->glyphCount) {
+#if defined(__WII__)
+        printf("Failed to read glyphs for font %d\n", font);
+#endif
         goto out;
     }
+
+#if defined(__WII__)
+    // swap endianness
+    for (int i = 0; i < textFontDescriptor->glyphCount; i++) {
+        textFontDescriptor->glyphs[i].width = __lwbrx(&textFontDescriptor->glyphs[i].width, 0);
+        textFontDescriptor->glyphs[i].dataOffset = __lwbrx(&textFontDescriptor->glyphs[i].dataOffset, 0);
+    }
+#endif
 
     dataSize = textFontDescriptor->lineHeight * ((textFontDescriptor->glyphs[textFontDescriptor->glyphCount - 1].width + 7) >> 3) + textFontDescriptor->glyphs[textFontDescriptor->glyphCount - 1].dataOffset;
     textFontDescriptor->data = (unsigned char*)internal_malloc(dataSize);
     if (textFontDescriptor->data == NULL) {
+#if defined(__WII__)
+        printf("Failed to allocate data for font %d\n", font);
+#endif
         goto out;
     }
 
     if (fileRead(textFontDescriptor->data, 1, dataSize, stream) != dataSize) {
+#if defined(__WII__)
+        printf("Failed to read data for font %d\n", font);
+#endif
         goto out;
     }
 
     rc = 0;
 
 out:
+
+#if defined(__WII__)
+    if (rc != 0) {
+        printf("ERROR at %s:%d\n", __FILE__, __LINE__);
+        printf("glyphCount: %d\n", textFontDescriptor->glyphCount);
+        printf("lineHeight: %d\n", textFontDescriptor->lineHeight);
+        printf("letterSpacing: %d\n", textFontDescriptor->letterSpacing);
+        printf("glyphs: %p\n", textFontDescriptor->glyphs);
+        printf("data: %p\n", textFontDescriptor->data);
+
+    }
+#endif
 
     if (rc != 0) {
         if (textFontDescriptor->data != NULL) {
