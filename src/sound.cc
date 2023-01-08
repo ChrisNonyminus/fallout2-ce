@@ -663,11 +663,13 @@ int soundPlay(Sound* sound)
 
     if (!gSoundInitialized) {
         gSoundLastError = SOUND_NOT_INITIALIZED;
+        printf("soundPlay: SOUND_NOT_INITIALIZED\n");
         return gSoundLastError;
     }
 
     if (sound == NULL || sound->soundBuffer == -1) {
         gSoundLastError = SOUND_NO_SOUND;
+        printf("soundPlay: SOUND_NO_SOUND\n");
         return gSoundLastError;
     }
 

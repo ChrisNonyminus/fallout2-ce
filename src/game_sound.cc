@@ -192,7 +192,7 @@ int gameSoundInit()
         return -1;
     }
 
-#if !defined(__WII__)
+#if 1
 
     if (!settings.sound.initialize) {
         return 0;
@@ -204,7 +204,7 @@ int gameSoundInit()
     return 0;
 #endif
 
-    gGameSoundDebugEnabled = true;
+    //gGameSoundDebugEnabled = true;
 #endif
 
     if (gGameSoundDebugEnabled) {
@@ -1545,15 +1545,18 @@ void _gsound_lrg_butt_release(int btn, int keyCode)
 int soundPlayFile(const char* name)
 {
     if (!gGameSoundInitialized) {
+        debugPrint("soundPlayFile: Game sound not initialized\n");
         return -1;
     }
 
     if (!gSoundEffectsEnabled) {
+        debugPrint("soundPlayFile: Sound effects disabled\n");
         return -1;
     }
 
     Sound* sound = soundEffectLoad(name, NULL);
     if (sound == NULL) {
+        debugPrint("soundPlayFile: Failed to load sound file '%s'\n", name);
         return -1;
     }
 

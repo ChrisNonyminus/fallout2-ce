@@ -143,7 +143,7 @@ int artInit()
         return -1;
     }
 
-#if defined(__WII__)
+#if 0
     debugPrint("art_init: cache initialized to size %d\n", cacheSize);
 #endif
 
@@ -165,7 +165,7 @@ int artInit()
         }
     }
 
-#if defined(__WII__)
+#if 0
     debugPrint("art_init: art lists read\n");
 #endif
 
@@ -177,7 +177,7 @@ int artInit()
         return -1;
     }
 
-#if defined(__WII__)
+#if 0
     debugPrint("art_init: anon_alias allocated\n");
 #endif
 
@@ -189,7 +189,7 @@ int artInit()
         return -1;
     }
 
-#if defined(__WII__)
+#if 0
     debugPrint("art_init: artCritterFidShouldRunData allocated\n");
 #endif
 
@@ -206,7 +206,7 @@ int artInit()
         return -1;
     }
 
-#if defined(__WII__)
+#if 0
     debugPrint("art_init: critter.lst opened\n");
 #endif
 
@@ -292,7 +292,7 @@ int artInit()
         return -1;
     }
 
-#if defined(__WII__)
+#if 0
     debugPrint("Allocated %d bytes for head_info in art_init\n", sizeof(*gHeadDescriptions) * gArtListDescriptions[OBJ_TYPE_HEAD].fileNamesLength);
     debugPrint("Loading head info from %sart\\%s\\%s.lst", _cd_path_base, gArtListDescriptions[OBJ_TYPE_HEAD].name, gArtListDescriptions[OBJ_TYPE_HEAD].name);
 #endif
@@ -306,7 +306,7 @@ int artInit()
         return -1;
     }
 
-#if defined(__WII__)
+#if 0
     debugPrint("OK");
 #endif
 
@@ -513,7 +513,7 @@ unsigned char* artLockFrameDataReturningSize(int fid, CacheEntry** handlePtr, in
     cacheLock(&gArtCache, fid, (void**)&art, handlePtr);
 
     if (art == NULL) {
-#if defined(__WII__)
+#if 0
         debugPrint("artLockFrameDataReturningSize: art == NULL, fid = %d\n", fid);
 #endif
         return NULL;
@@ -522,7 +522,7 @@ unsigned char* artLockFrameDataReturningSize(int fid, CacheEntry** handlePtr, in
     // NOTE: Uninline.
     *widthPtr = artGetWidth(art, 0, 0);
     if (*widthPtr == -1) {
-#if defined(__WII__)
+#if 0
         debugPrint("artLockFrameDataReturningSize: artGetWidth == -1, fid = %d\n", fid);
 #endif
         return NULL;
@@ -531,7 +531,7 @@ unsigned char* artLockFrameDataReturningSize(int fid, CacheEntry** handlePtr, in
     // NOTE: Uninline.
     *heightPtr = artGetHeight(art, 0, 0);
     if (*heightPtr == -1) {
-#if defined(__WII__)
+#if 0
         debugPrint("artLockFrameDataReturningSize: artGetHeight == -1, fid = %d\n", fid);
 #endif
         return NULL;
@@ -719,7 +719,7 @@ static int artReadList(const char* path, char** artListPtr, int* artListSizePtr)
 
     *artListSizePtr = count;
 
-#if defined(__WII__)
+#if 0
     debugPrint("artReadList:\npath: %s\n", path);
     debugPrint("count: %d\n", count);
 
@@ -872,21 +872,21 @@ unsigned char* artGetFrameData(Art* art, int frame, int direction)
 ArtFrame* artGetFrame(Art* art, int frame, int rotation)
 {
     if (rotation < 0 || rotation >= 6) {
-#if defined(__WII__)
+#if 0
         debugPrint("artGetFrame: invalid rotation %d\n", rotation);
 #endif
         return NULL;
     }
 
     if (art == NULL) {
-#if defined(__WII__)
+#if 0
         debugPrint("artGetFrame: art is NULL\n");
 #endif
         return NULL;
     }
 
     if (frame < 0 || frame >= art->frameCount) {
-#if defined(__WII__)
+#if 0
         debugPrint("artGetFrame: invalid frame %d\n", frame);
         debugPrint("artGetFrame: art %p\n", art);
         debugPrint("artGetFrame: art->frameCount %d\n", art->frameCount);

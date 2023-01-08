@@ -333,6 +333,11 @@ if (NINTENDO_WII)
         -lSDL_mixer
         -lSDL_image
         -lSDL
+        -ljpeg
+        -lpng
+        -lfreetype
+        -lmodplug
+        -lmad
         -lz
         -lfat
         -lwiiuse

@@ -15,7 +15,7 @@ namespace fallout {
 //
 // TODO: Remove when we migrate to use std::filesystem::path or std::string to
 // represent paths across the codebase.
-#define COMPAT_MAX_PATH 260
+#define COMPAT_MAX_PATH 300
 
 #define COMPAT_MAX_DRIVE 8
 #define COMPAT_MAX_DIR 256

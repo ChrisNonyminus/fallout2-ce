@@ -36,7 +36,7 @@ static DebugPrintProc* gDebugPrintProc = NULL;
 // 0x4C6CD0
 void _GNW_debug_init()
 {
-#if defined(__WII__)
+#if 0
     gDebugPrintProc = _win_debug;
 #endif
     atexit(_debug_exit);
