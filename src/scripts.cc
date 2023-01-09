@@ -37,6 +37,7 @@
 #include "window_manager_private.h"
 #include "worldmap.h"
 
+
 namespace fallout {
 
 #define SCRIPT_LIST_EXTENT_SIZE 16
@@ -278,9 +279,15 @@ int gameTimeGetTime()
 // 0x4A3338
 void gameTimeGetDate(int* monthPtr, int* dayPtr, int* yearPtr)
 {
+#ifndef FALLOUT1
     int year = (gGameTime / GAME_TIME_TICKS_PER_DAY + 24) / 365 + 2241;
     int month = 6;
     int day = (gGameTime / GAME_TIME_TICKS_PER_DAY + 24) % 365;
+#else // Start date is 2161-12-05
+    int year = (gGameTime / GAME_TIME_TICKS_PER_DAY + 24) / 365 + 2161;
+    int month = 11;
+    int day = (gGameTime / GAME_TIME_TICKS_PER_DAY + 24) % 365;
+#endif
 
     while (1) {
         int daysInMonth = gGameTimeDaysPerMonth[month];
@@ -434,6 +441,7 @@ int _scriptsCheckGameEvents(int* moviePtr, int window)
 
     int day = gGameTime / GAME_TIME_TICKS_PER_DAY;
 
+#ifndef FALLOUT1
     if (gameGetGlobalVar(GVAR_ENEMY_ARROYO)) {
         movie = MOVIE_AFAILED;
         movieFlags = GAME_MOVIE_FADE_IN | GAME_MOVIE_STOP_MUSIC;
@@ -489,6 +497,110 @@ int _scriptsCheckGameEvents(int* moviePtr, int window)
     if (moviePtr != NULL) {
         *moviePtr = movie;
     }
+#else // FALLOUT1
+/*
+int CheckEvents()
+{
+  int v0; // r29
+  int v1; // r3
+  int result; // r3
+  int *v3; // r6
+  int v4; // r0
+  int v5; // r3
+  int v6; // r0
+
+  v0 = 0;
+  if ( game_global_vars[10] || game_global_vars[101] == 2 )
+  {
+    if ( game_global_vars[147] && (game_time() - game_global_vars[147]) / 0xAu > 240 )
+    {
+      debug_printf("\nWORLD MAP: Doing \"Vats explode\" specail.\n");
+      gmovie_play(3, 11);
+      game_global_vars[308] = 2;
+      if ( game_global_vars[18] )
+      {
+        worldmap_script_jump(0, 0);
+        v0 = 1;
+        if ( LoadTownMap("V13ENT.MAP") == -1 )
+          v0 = -1;
+      }
+      stat_pc_add_experience(10000);
+      game_global_vars[155] += 5;
+      v4 = game_global_vars[155];
+      if ( v4 >= -100 )
+      {
+        if ( v4 <= 100 )
+          game_global_vars[155] = v4;
+        else
+          game_global_vars[155] = 100;
+      }
+      else
+      {
+        game_global_vars[155] = -100;
+      }
+      v5 = getmsg((int)&wrldmap_mesg_file, &mesg, (struct strbuf *)0x1F4, v3);
+      display_print(v5);
+      game_global_vars[147] = 0;
+      game_global_vars[17] = 1;
+    }
+    if ( game_global_vars[55] && (game_time() - game_global_vars[55]) / 0xAu > 0xF0 )
+    {
+      debug_printf("\nWORLD MAP: Doing \"Master lair explode\" specail.\n");
+      gmovie_play(4, 11);
+      game_global_vars[309] = 2;
+      if ( game_global_vars[17] )
+      {
+        worldmap_script_jump(0, 0);
+        v0 = 1;
+        if ( LoadTownMap("V13ENT.MAP") == -1 )
+          v0 = -1;
+      }
+      stat_pc_add_experience(10000);
+      game_global_vars[155] += 10;
+      v6 = game_global_vars[155];
+      if ( v6 >= -100 )
+      {
+        if ( v6 <= 100 )
+          game_global_vars[155] = v6;
+        else
+          game_global_vars[155] = 100;
+      }
+      else
+      {
+        game_global_vars[155] = -100;
+      }
+      game_global_vars[55] = 0;
+      game_global_vars[18] = 1;
+    }
+    result = v0;
+  }
+  else
+  {
+    v1 = debug_printf("\nWORLD MAP: Vault water time ran out (death).\n");
+    BlackOut(v1);
+    gmovie_play(6, 11);
+    result = 1;
+    game_user_wants_to_quit = 1;
+  }
+  return result;
+}
+*/
+
+    if (gameGetGlobalVar(10) || gameGetGlobalVar(101) == 2) {
+        if (gameGetGlobalVar(147) && gameTimeGetTime() - gameGetGlobalVar(147) / 10 > 240) {
+            debugPrint("\nWORLD MAP: Doing \"Vats explode\" specail.\n"); // [sic]
+            gameMoviePlay(MOVIE_VEXPLD, 11);
+            gameSetGlobalVar(308, 2);
+            if (gameGetGlobalVar(18)) {
+                worldmapScriptJump(0, 0);
+                v0 = 1;
+                if (LoadTownMap("V13ENT.MAP") == -1) {
+                    v0 = -1;
+                }
+            }
+        }
+    }
+#endif // FALLOUT1
 
     return 0;
 }

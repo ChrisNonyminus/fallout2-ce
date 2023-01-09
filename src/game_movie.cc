@@ -31,6 +31,7 @@ static char* gameMovieBuildSubtitlesFilePath(char* movieFilePath);
 static const float flt_50352A = 0.032258064f;
 
 // 0x518DA0
+#ifndef FALLOUT1
 static const char* gMovieFileNames[MOVIE_COUNT] = {
     "iplogo.mve",
     "intro.mve",
@@ -50,6 +51,23 @@ static const char* gMovieFileNames[MOVIE_COUNT] = {
     "artimer4.mve",
     "credits.mve",
 };
+#else
+static const char* gMovieFileNames[MOVIE_COUNT] = {
+    "iplogo.mve",
+    "intro.mve",
+    "vexpld.mve",
+    "cathexp.mve",
+    "ovrintro.mve",
+    "boil3.mve",
+    "ovrrun.mve",
+    "walkm.mve",
+    "walkw.mve",
+    "dipedv.mve",
+    "boil1.mve",
+    "boil2.mve",
+    "raekills.mve",
+};
+#endif
 
 // 0x518DE4
 static const char* gMoviePaletteFilePaths[MOVIE_COUNT] = {
@@ -213,11 +231,15 @@ int gameMoviePlay(int movie, int flags)
     int oldFont;
     if (subtitlesEnabled) {
         const char* subtitlesPaletteFilePath;
+#ifndef FALLOUT1
         if (gMoviePaletteFilePaths[movie] != NULL) {
             subtitlesPaletteFilePath = gMoviePaletteFilePaths[movie];
         } else {
             subtitlesPaletteFilePath = "art\\cuts\\subtitle.pal";
         }
+#else
+        subtitlesPaletteFilePath = "art\\cuts\\subtitle.pal";
+#endif
 
         colorPaletteLoad(subtitlesPaletteFilePath);
 

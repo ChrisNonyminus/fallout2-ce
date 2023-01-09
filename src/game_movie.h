@@ -12,6 +12,7 @@ typedef enum GameMovieFlags {
     GAME_MOVIE_PAUSE_MUSIC = 0x08,
 } GameMovieFlags;
 
+#ifndef FALLOUT1
 typedef enum GameMovie {
     MOVIE_IPLOGO,
     MOVIE_INTRO,
@@ -32,6 +33,24 @@ typedef enum GameMovie {
     MOVIE_CREDITS,
     MOVIE_COUNT,
 } GameMovie;
+#else
+typedef enum GameMovie {
+    MOVIE_IPLOGO,
+    MOVIE_INTRO,
+    MOVIE_VEXPLD,
+    MOVIE_CATHEXP,
+    MOVIE_OVRINTRO,
+    MOVIE_BOIL3,
+    MOVIE_OVRRUN,
+    MOVIE_WALKM,
+    MOVIE_WALKW,
+    MOVIE_DIPEDV,
+    MOVIE_BOIL1,
+    MOVIE_BOIL2,
+    MOVIE_RAEKILLS,
+    MOVIE_COUNT,
+} GameMovie;
+#endif
 
 int gameMoviesInit();
 void gameMoviesReset();

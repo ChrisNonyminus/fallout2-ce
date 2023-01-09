@@ -97,7 +97,11 @@ static int main_menu_fatal_error();
 static void main_menu_play_sound(const char* fileName);
 
 // 0x5194C8
+#ifndef FALLOUT1
 static char _mainMap[] = "artemple.map";
+#else
+static char _mainMap[] = "V13Ent.map";
+#endif
 
 // 0x5194D8
 static int _main_game_paused = 0;
@@ -330,10 +334,16 @@ int falloutMain(int argc, char** argv)
     return 0;
 }
 
+#ifdef FALLOUT1
+#define WINDOW_TITLE "FALLOUT"
+#else
+#define WINDOW_TITLE "FALLOUT II"
+#endif
+
 // 0x480CC0
 static bool falloutInit(int argc, char** argv)
 {
-    if (gameInitWithOptions("FALLOUT II", false, 0, 0, argc, argv) == -1) {
+    if (gameInitWithOptions(WINDOW_TITLE, false, 0, 0, argc, argv) == -1) {
         return false;
     }
 

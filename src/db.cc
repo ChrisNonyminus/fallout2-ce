@@ -51,9 +51,11 @@ static FileList* gFileListHead;
 int dbOpen(const char* filePath1, int a2, const char* filePath2, int a4)
 {
     if (filePath1 != NULL) {
+#ifndef FALLOUT1 // Just load unpacked files from fallout 1 for now, I don't feel like implementing DAT1.
         if (!xbaseOpen(filePath1)) {
             return -1;
         }
+#endif
     }
 
     if (filePath2 != NULL) {
