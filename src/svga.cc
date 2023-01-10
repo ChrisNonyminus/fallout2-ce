@@ -15,6 +15,10 @@
 #include "window_manager.h"
 #include "window_manager_private.h"
 
+#if defined(__WII__)
+#include <ogcsys.h>
+#endif
+
 namespace fallout {
 
 static bool createRenderer(int width, int height);
@@ -220,6 +224,10 @@ int _GNW95_init_window(int width, int height, bool fullscreen)
 
 #else
         gSdlWindow = SDL_SetVideoMode(640, 480, 8, SDL_HWSURFACE | SDL_FULLSCREEN | SDL_DOUBLEBUF);
+#if defined(__WII__)
+// add console
+        //console_init(gSdlWindow, 20, 64, 640, 480, 640 * 2);
+#endif
 #endif
 #endif
         if (gSdlWindow == NULL) {
@@ -552,10 +560,10 @@ void renderPresent()
     // // debug: blit gSDLSurface to gSdlTextureSurface
     // SDL_BlitSurface(gSdlSurface, NULL, gSdlTextureSurface, NULL);
 
-    // debug: save bmps
-    SDL_SaveBMP(gSdlTextureSurface, "sd:/gSdlTextureSurface.bmp");
-    SDL_SaveBMP(gSdlWindow, "sd:/gSdlWindow.bmp");
-    SDL_SaveBMP(gSdlSurface, "sd:/gSdlSurface.bmp");
+    // // debug: save bmps
+    // SDL_SaveBMP(gSdlTextureSurface, "sd:/gSdlTextureSurface.bmp");
+    // SDL_SaveBMP(gSdlWindow, "sd:/gSdlWindow.bmp");
+    // SDL_SaveBMP(gSdlSurface, "sd:/gSdlSurface.bmp");
 
     SDL_Flip(gSdlWindow);
 

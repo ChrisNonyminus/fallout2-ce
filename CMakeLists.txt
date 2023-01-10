@@ -326,6 +326,8 @@ if (NINTENDO_WII)
         "/opt/devkitpro/portlibs/wii/include"
         "/opt/devkitpro/portlibs/wii/include/SDL"
     )
+
+    target_sources(${EXECUTABLE_NAME} PUBLIC "src/platform/wii/gx_stuff.cpp" "src/platform/wii/osk.cpp")
     add_definitions("-D__WII__=1")
     # add the following libraries via linker flags: ZLIB, SDL, SDL_gfx, SDL_image, SDL_mixer
     target_link_libraries(${EXECUTABLE_NAME}
@@ -346,6 +348,9 @@ if (NINTENDO_WII)
         -logc
         -lm
         -laesnd
+        -lasnd
+        -lvorbisidec
+        -logg
     )
 endif()
 

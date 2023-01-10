@@ -56,6 +56,10 @@
 #include "word_wrap.h"
 #include "worldmap.h"
 
+#if defined(__WII__)
+#include "platform/wii/osk.h"
+#endif
+
 namespace fallout {
 
 #define LS_WINDOW_WIDTH 640
@@ -2220,6 +2224,7 @@ static int _get_input_str2(int win, int doneKeyCode, int cancelKeyCode, char* de
 
     int v1 = 0;
 
+#if !defined(__WII__)
     int rc = 1;
     while (rc == 1) {
         sharedFpsLimiter.mark();
@@ -2283,7 +2288,50 @@ static int _get_input_str2(int win, int doneKeyCode, int cancelKeyCode, char* de
         renderPresent();
         sharedFpsLimiter.throttle();
     }
+#else
+    int rc = 1;
 
+    wii::Osk osk(text);
+    osk.maxLength = 255;
+
+    osk.init();
+
+    while (rc == 1) {
+        sharedFpsLimiter.mark();
+        osk.draw();
+
+        renderPresent();
+        sharedFpsLimiter.throttle();
+
+        osk.update();
+
+        if (osk.textComplete && !osk.is_visible()) {
+            soundPlayFile("ib1p1xx1");
+            rc = 0;
+        } else if (!osk.is_visible()) {
+            soundPlayFile("ib1p1xx1");
+            rc = 2;
+        }
+
+        if (_game_user_wants_to_quit != 0) {
+            rc = -1;
+        }
+    }
+
+    if (rc == 0) {
+        if (strlen(osk.get_text()) != 0) {
+            strcpy(text, osk.get_text());
+        } else {
+            rc = 1;
+        }
+    } else {
+        if (rc == 2) {
+            rc = 0;
+        }
+    }
+    osk.deinit();
+
+#endif
     endTextInput();
 
     if (rc == 0) {

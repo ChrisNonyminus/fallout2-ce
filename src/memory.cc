@@ -12,7 +12,11 @@
 #include <ogc/system.h>
 #include <ogc/machine/processor.h>
 
-
+#include "window.h"
+#include "text_font.h"
+#include "window_manager.h"
+#include "svga.h"
+#include "color.h"
 
 #endif
 
@@ -294,6 +298,38 @@ static void memoryBlockPrintStats()
         debugPrint("Max memory allocated:     %6d blocks, %9u bytes total\n", gMemoryBlockMaximumCount, gMemoryBlocksMaximumSize);
     }
 }
+
+#if defined(__WII__)
+void print_memory_stats()
+{
+    // show stats on screen (pos: 0, 460, size: 640x20)
+
+    char buf[256];
+    sprintf(buf, "MEM: %6d blocks, %9u bytes total\n", gMemoryBlocksCurrentCount, gMemoryBlocksCurrentSize);
+
+    int x = 0;
+    int y = 460;
+    int w = 640;
+    int h = 20;
+
+    u8 pix[640 * 20];
+    memset(pix, 0, sizeof(pix));
+
+    fontDrawText(pix, buf, 640, 640, _colorTable[32767]);
+
+    _scr_blit(pix, 640, 480, 0, 0, w, h, x, y);
+
+    // printf("%s\n", buf);
+
+    // sprintf(buf, "MEM_MAX: %6d blocks, %9u bytes total\n", gMemoryBlockMaximumCount, gMemoryBlocksMaximumSize);
+
+    // fontDrawText(pix, buf, 640, 640, _colorTable[32767]);
+
+    // _scr_blit(pix, 640, 480, 0, 0, w, h, x, y + 20);
+
+    printf("%s\n", buf);
+}
+#endif
 
 // NOTE: Inlined.
 //

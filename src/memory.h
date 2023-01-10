@@ -10,6 +10,10 @@ void* internal_malloc(size_t size);
 void* internal_realloc(void* ptr, size_t size);
 void internal_free(void* ptr);
 
+#if defined(__WII__)
+void print_memory_stats();
+#endif
+
 } // namespace fallout
 
 #endif /* MEMORY_H */

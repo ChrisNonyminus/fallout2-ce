@@ -22,6 +22,10 @@
 #include "window_manager.h"
 #include "word_wrap.h"
 
+#if defined(__WII__)
+#include "platform/wii/osk.h"
+#endif
+
 namespace fallout {
 
 #define FILE_DIALOG_LINE_COUNT 12
@@ -1122,7 +1126,7 @@ int showSaveFileDialog(char* title, char** fileList, char* dest, int fileListLen
 
     int doubleClickSelectedFileIndex = -2;
     int doubleClickTimer = FILE_DIALOG_DOUBLE_CLICK_DELAY;
-
+#if !defined(__WII__)
     int rc = -1;
     while (rc == -1) {
         sharedFpsLimiter.mark();
@@ -1380,6 +1384,51 @@ int showSaveFileDialog(char* title, char** fileList, char* dest, int fileListLen
         renderPresent();
         sharedFpsLimiter.throttle();
     }
+
+#else
+    int rc = 1;
+
+    wii::Osk osk(dest);
+    osk.maxLength = 255;
+
+    osk.init();
+
+    while (rc == 1) {
+        sharedFpsLimiter.mark();
+        osk.draw();
+
+        renderPresent();
+        sharedFpsLimiter.throttle();
+
+        osk.update();
+
+        if (osk.textComplete && !osk.is_visible()) {
+            soundPlayFile("ib1p1xx1");
+            rc = 0;
+        } else if (!osk.is_visible()) {
+            soundPlayFile("ib1p1xx1");
+            rc = 2;
+        }
+
+        if (_game_user_wants_to_quit != 0) {
+            rc = -1;
+        }
+    }
+
+    if (rc == 0) {
+        if (strlen(osk.get_text()) != 0) {
+            strcpy(fileNameCopy, osk.get_text());
+        } else {
+            rc = 1;
+        }
+    } else {
+        if (rc == 2) {
+            rc = 0;
+        }
+    }
+    osk.deinit();
+#endif
+
 
     endTextInput();
 

@@ -46,6 +46,10 @@
 #include "word_wrap.h"
 #include "worldmap.h"
 
+#if defined(__WII__)
+#include "platform/wii/osk.h"
+#endif
+
 namespace fallout {
 
 #define RENDER_ALL_STATS 7
@@ -1937,6 +1941,7 @@ static int _get_input_str(int win, int cancelKeyCode, char* text, int maxLength,
     int blinkingCounter = 3;
     bool blink = false;
 
+#if !defined(__WII__)
     int rc = 1;
     while (rc == 1) {
         sharedFpsLimiter.mark();
@@ -1996,6 +2001,46 @@ static int _get_input_str(int win, int cancelKeyCode, char* text, int maxLength,
         renderPresent();
         sharedFpsLimiter.throttle();
     }
+#else // use osk
+    int rc = 1;
+    
+    wii::Osk osk(text);
+    osk.maxLength = maxLength;
+
+    osk.init();
+
+    while (osk.is_visible()) {
+        sharedFpsLimiter.mark();
+
+        _frame_time = getTicks();
+        osk.draw();
+        while (getTicksSince(_frame_time) < 1000 / 24) { }
+        renderPresent();
+        sharedFpsLimiter.throttle();
+        osk.update();
+
+        if (osk.textComplete) {
+            soundPlayFile("ib1p1xx1");
+            rc = 0;
+        }
+
+        if (osk.is_visible() == false && !osk.textComplete) {
+            rc = -1;
+        }
+    }
+
+    char* oskin = osk.get_text();
+    oskin[maxLength] = '\0';
+    nameLength = strlen(oskin);
+    strcpy(copy, oskin);
+
+    osk.deinit();
+
+    
+#endif
+
+
+    
 
     endTextInput();
 

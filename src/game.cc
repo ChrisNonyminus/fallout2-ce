@@ -918,6 +918,7 @@ int gameHandleKey(int eventCode, bool isInCombatMode)
         break;
     }
 
+
     return 0;
 }
 

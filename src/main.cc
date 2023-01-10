@@ -42,6 +42,11 @@
 #include "word_wrap.h"
 #include "worldmap.h"
 
+
+#if defined(__WII__)
+    #include "memory.h"
+#endif
+
 namespace fallout {
 
 #define MAIN_MENU_WINDOW_WIDTH 640
@@ -457,6 +462,10 @@ static void mainLoop()
             _game_user_wants_to_quit = 2;
         }
 
+#if defined(__WII__)
+    // DEBUG: show debug stats
+    print_memory_stats();
+#endif
         renderPresent();
         sharedFpsLimiter.throttle();
     }
