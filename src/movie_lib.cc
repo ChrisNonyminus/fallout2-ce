@@ -735,7 +735,11 @@ static void* _MVE_MemAlloc(STRUCT_6B3690* a1, unsigned int a2)
 
     _MVE_MemFree(a1);
 
+#if !defined(__WII__)
     ptr = gMovieLibMallocProc(a2 + 100);
+#else
+    ptr = gMovieLibMallocProc(a2 + 100, __FILE__, __LINE__);
+#endif
     if (ptr == NULL) {
         return NULL;
     }

@@ -13,7 +13,11 @@ namespace fallout {
 // with a check for this value.
 #define DICTIONARY_MARKER 0xFEBAFEBA
 
+#if !defined(__WII__)
 static void* dictionaryMallocDefaultImpl(size_t size);
+#else
+static void* dictionaryMallocDefaultImpl(size_t size, const char* file, int line);
+#endif
 static void* dictionaryReallocDefaultImpl(void* ptr, size_t newSize);
 static void dictionaryFreeDefaultImpl(void* ptr);
 static int dictionaryFindIndexForKey(Dictionary* dictionary, const char* key, int* index);
@@ -28,7 +32,11 @@ static ReallocProc* gDictionaryReallocProc = dictionaryReallocDefaultImpl;
 static FreeProc* gDictionaryFreeProc = dictionaryFreeDefaultImpl;
 
 // 0x4D9B90
+#if !defined(__WII__)
 static void* dictionaryMallocDefaultImpl(size_t size)
+#else
+static void* dictionaryMallocDefaultImpl(size_t size, const char* file, int line)
+#endif
 {
     return malloc(size);
 }
@@ -64,7 +72,11 @@ int dictionaryInit(Dictionary* dictionary, int initialCapacity, size_t valueSize
     int rc = 0;
 
     if (initialCapacity != 0) {
+#if !defined(__WII__)
         dictionary->entries = (DictionaryEntry*)gDictionaryMallocProc(sizeof(*dictionary->entries) * initialCapacity);
+#else
+        dictionary->entries = (DictionaryEntry*)gDictionaryMallocProc(sizeof(*dictionary->entries) * initialCapacity, __FILE__, __LINE__);
+#endif
         if (dictionary->entries == NULL) {
             rc = -1;
         }
@@ -223,7 +235,11 @@ int dictionaryAddValue(Dictionary* dictionary, const char* key, const void* valu
     }
 
     // Make a copy of the key.
+#if !defined(__WII__)
     char* keyCopy = (char*)gDictionaryMallocProc(strlen(key) + 1);
+#else
+    char* keyCopy = (char*)gDictionaryMallocProc(strlen(key) + 1, __FILE__, __LINE__);
+#endif
     if (keyCopy == NULL) {
         return -1;
     }
@@ -233,7 +249,11 @@ int dictionaryAddValue(Dictionary* dictionary, const char* key, const void* valu
     // Make a copy of the value.
     void* valueCopy = NULL;
     if (value != NULL && dictionary->valueSize != 0) {
+#if !defined(__WII__)
         valueCopy = gDictionaryMallocProc(dictionary->valueSize);
+#else
+        valueCopy = gDictionaryMallocProc(dictionary->valueSize, __FILE__, __LINE__);
+#endif
         if (valueCopy == NULL) {
             gDictionaryFreeProc(keyCopy);
             return -1;
@@ -420,7 +440,11 @@ int dictionaryLoad(FILE* stream, Dictionary* dictionary, int a3)
         return 0;
     }
 
+#if !defined(__WII__)
     dictionary->entries = (DictionaryEntry*)gDictionaryMallocProc(sizeof(*dictionary->entries) * dictionary->entriesCapacity);
+#else
+    dictionary->entries = (DictionaryEntry*)gDictionaryMallocProc(sizeof(*dictionary->entries) * dictionary->entriesCapacity, __FILE__, __LINE__);
+#endif
     if (dictionary->entries == NULL) {
         return -1;
     }
@@ -441,8 +465,11 @@ int dictionaryLoad(FILE* stream, Dictionary* dictionary, int a3)
         if (keyLength == -1) {
             return -1;
         }
-
+#if !defined(__WII__)
         entry->key = (char*)gDictionaryMallocProc(keyLength + 1);
+#else
+        entry->key = (char*)gDictionaryMallocProc(keyLength + 1, __FILE__, __LINE__);
+#endif
         if (entry->key == NULL) {
             return -1;
         }
@@ -452,7 +479,11 @@ int dictionaryLoad(FILE* stream, Dictionary* dictionary, int a3)
         }
 
         if (dictionary->valueSize != 0) {
+#if !defined(__WII__)
             entry->value = gDictionaryMallocProc(dictionary->valueSize);
+#else
+            entry->value = gDictionaryMallocProc(dictionary->valueSize, __FILE__, __LINE__);
+#endif
             if (entry->value == NULL) {
                 return -1;
             }

@@ -185,7 +185,11 @@ int windowManagerInit(VideoSystemInitProc* videoSystemInitProc, VideoSystemExitP
     _doing_refresh_all = 0;
 
     colorPaletteSetFileIO(paletteOpenFileImpl, paletteReadFileImpl, paletteCloseFileImpl);
+#if !defined(__WII__)
     colorPaletteSetMemoryProcs(internal_malloc, internal_realloc, internal_free);
+#else
+    colorPaletteSetMemoryProcs(internal_malloc_managed, internal_realloc, internal_free);
+#endif
 
     if (!_initColors()) {
         unsigned char* palette = (unsigned char*)internal_malloc(768);

@@ -42,7 +42,11 @@ typedef struct FadeSound {
     struct FadeSound* next;
 } FadeSound;
 
+#if !defined(__WII__)
 static void* soundMallocProcDefaultImpl(size_t size);
+#else
+static void* soundMallocProcDefaultImpl(size_t size, const char* file, int line);
+#endif
 static void* soundReallocProcDefaultImpl(void* ptr, size_t size);
 static void soundFreeProcDefaultImpl(void* ptr);
 static char* soundFileManglerDefaultImpl(char* fname);
@@ -159,7 +163,11 @@ static Sound* gSoundListHead;
 static SDL_TimerID gFadeSoundsTimerId = 0;
 
 // 0x4AC6F0
+#if !defined(__WII__)
 void* soundMallocProcDefaultImpl(size_t size)
+#else
+void* soundMallocProcDefaultImpl(size_t size, const char* file, int line)
+#endif
 {
     return malloc(size);
 }
@@ -431,7 +439,11 @@ Sound* soundAllocate(int type, int soundFlags)
         return NULL;
     }
 
+#if !defined(__WII__)
     Sound* sound = (Sound*)gSoundMallocProc(sizeof(*sound));
+#else
+    Sound* sound = (Sound*)gSoundMallocProc(sizeof(*sound), __FILE__, __LINE__);
+#endif
     memset(sound, 0, sizeof(*sound));
 
     memcpy(&(sound->io), &gSoundDefaultFileIO, sizeof(gSoundDefaultFileIO));
@@ -504,7 +516,11 @@ int _preloadBuffers(Sound* sound)
         sound->type |= SOUND_TYPE_MEMORY;
     }
 
+#if !defined(__WII__)
     buf = (unsigned char*)gSoundMallocProc(size);
+#else
+    buf = (unsigned char*)gSoundMallocProc(size, __FILE__, __LINE__);
+#endif
     bytes_read = sound->io.read(sound->io.fd, buf, size);
     if (bytes_read != size) {
         if ((sound->soundFlags & SOUND_LOOPING) == 0 || (sound->soundFlags & SOUND_FLAG_0x100) != 0) {
@@ -532,7 +548,11 @@ int _preloadBuffers(Sound* sound)
         sound->io.fd = -1;
     } else {
         if (sound->data == NULL) {
+#if !defined(__WII__)
             sound->data = (unsigned char*)gSoundMallocProc(sound->dataSize);
+#else
+            sound->data = (unsigned char*)gSoundMallocProc(sound->dataSize, __FILE__, __LINE__);
+#endif
         }
     }
 
@@ -1490,7 +1510,11 @@ int _internalSoundFade(Sound* sound, int duration, int targetVolume, bool pause)
             fadeSound = _fadeFreeList;
             _fadeFreeList = _fadeFreeList->next;
         } else {
+#if !defined(__WII__)
             fadeSound = (FadeSound*)gSoundMallocProc(sizeof(FadeSound));
+#else
+            fadeSound = (FadeSound*)gSoundMallocProc(sizeof(FadeSound), __FILE__, __LINE__);
+#endif
         }
 
         if (fadeSound != NULL) {

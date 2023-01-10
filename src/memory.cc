@@ -6,17 +6,17 @@
 
 #include "debug.h"
 
-#if defined (__WII__)
-#include <ogcsys.h>
+#if defined(__WII__)
+#include <ogc/machine/processor.h>
 #include <ogc/mutex.h>
 #include <ogc/system.h>
-#include <ogc/machine/processor.h>
+#include <ogcsys.h>
 
-#include "window.h"
-#include "text_font.h"
-#include "window_manager.h"
-#include "svga.h"
 #include "color.h"
+#include "svga.h"
+#include "text_font.h"
+#include "window.h"
+#include "window_manager.h"
 
 #endif
 
@@ -35,7 +35,24 @@ typedef struct MemoryBlockHeader {
 
     // See [MEMORY_BLOCK_HEADER_GUARD].
     int guard;
+
+#if defined(__WII__)
+    // File name where the memory block was allocated.
+    char* file;
+
+    // Line number where the memory block was allocated.
+    int line;
+#endif
 } MemoryBlockHeader;
+
+#if defined(__WII__)
+typedef struct FileMemoryStats {
+    char* file;
+    size_t size;
+} FileMemoryStats;
+
+static FileMemoryStats gFileMemoryStats[256];
+#endif
 
 // A footer of a memory block.
 typedef struct MemoryBlockFooter {
@@ -43,21 +60,21 @@ typedef struct MemoryBlockFooter {
     int guard;
 } MemoryBlockFooter;
 
-#if defined (__WII__)
-u8 *MEM2_start = (u8*)0x90200000;
-u8 *MEM2_end = (u8*)0x93200000;
+#if defined(__WII__)
+u8* MEM2_start = (u8*)0x90200000;
+u8* MEM2_end = (u8*)0x93200000;
 
 // strategy: if there is enough space in MEM2, allocate there, otherwise allocate in MEM1
-#define ALIGN(x, a) (((x) + ((a) - 1)) & ~((a) - 1))
+#define ALIGN(x, a) (((x) + ((a)-1)) & ~((a)-1))
 
 bool gAddressOccupied[0x3000000 / 32];
 
-void *MEM2_init(void *start, void *end, u32 size)
+void* MEM2_init(void* start, void* end, u32 size)
 {
-    u32 *p = (u32*)ALIGN((u32)start, 32);
+    u32* p = (u32*)ALIGN((u32)start, 32);
     u32* startp = p;
-    u32 *endp = (u32*)ALIGN((u32)end, 32);
-    u32 *endp2 = (u32*)((u32)endp - size);
+    u32* endp = (u32*)ALIGN((u32)end, 32);
+    u32* endp2 = (u32*)((u32)endp - size);
 
     while (p < endp2) {
         *p++ = 0;
@@ -67,22 +84,23 @@ void *MEM2_init(void *start, void *end, u32 size)
     return (void*)startp;
 }
 
-void *MEM2_alloc(u32 size) {
+void* MEM2_alloc(u32 size)
+{
     static void* p = NULL;
 
     if (p == NULL) {
         p = MEM2_init(MEM2_start, MEM2_end, 48 * 1024 * 1024);
     }
 
-    u32 *startp = (u32*)ALIGN((u32)p, 32);
+    u32* startp = (u32*)ALIGN((u32)p, 32);
 
     while (startp < (u32*)MEM2_end) {
         if (gAddressOccupied[(u32)startp / 32] == false) {
             // check if there is enough space
-            u32 *endp = (u32*)((u32)startp + size);
-            u32 *endp2 = (u32*)ALIGN((u32)endp, 32);
+            u32* endp = (u32*)((u32)startp + size);
+            u32* endp2 = (u32*)ALIGN((u32)endp, 32);
             bool enoughSpace = true;
-            for (u32 *p = startp; p < endp2; p++) {
+            for (u32* p = startp; p < endp2; p++) {
                 if (gAddressOccupied[(u32)p / 32] == true) {
                     enoughSpace = false;
                     break;
@@ -90,7 +108,7 @@ void *MEM2_alloc(u32 size) {
             }
             if (enoughSpace) {
                 // mark as occupied
-                for (u32 *p = startp; p < endp2; p++) {
+                for (u32* p = startp; p < endp2; p++) {
                     gAddressOccupied[(u32)p / 32] = true;
                 }
                 p = (void*)endp2;
@@ -103,22 +121,24 @@ void *MEM2_alloc(u32 size) {
     return (void*)malloc(size);
 }
 
-void MEM2_free(void *ptr) {
+void MEM2_free(void* ptr)
+{
     // if ptr is not in MEM2, just free it
     if (ptr < MEM2_start) {
         free(ptr);
         return;
     }
 
-    u32 *startp = (u32*)ALIGN((u32)ptr, 32);
-    u32 *endp = (u32*)((u32)startp + 32);
-    u32 *endp2 = (u32*)ALIGN((u32)endp, 32);
-    for (u32 *p = startp; p < endp2; p++) {
+    u32* startp = (u32*)ALIGN((u32)ptr, 32);
+    u32* endp = (u32*)((u32)startp + 32);
+    u32* endp2 = (u32*)ALIGN((u32)endp, 32);
+    for (u32* p = startp; p < endp2; p++) {
         gAddressOccupied[(u32)p / 32] = false;
     }
 }
 
-void* MEM2_realloc(void* ptr, size_t size) {
+void* MEM2_realloc(void* ptr, size_t size)
+{
     void* newPtr = MEM2_alloc(size);
     if (newPtr == NULL) {
         return NULL;
@@ -129,15 +149,27 @@ void* MEM2_realloc(void* ptr, size_t size) {
 }
 #endif
 
+#if !defined(__WII__)
 static void* memoryBlockMallocImpl(size_t size);
+#else
+static void* memoryBlockMallocImpl(size_t size, const char* file, int line);
+#endif
 static void* memoryBlockReallocImpl(void* ptr, size_t size);
 static void memoryBlockFreeImpl(void* ptr);
 static void memoryBlockPrintStats();
+#if !defined(__WII__)
 static void* mem_prep_block(void* block, size_t size);
+#else
+static void* mem_prep_block(void* block, size_t size, const char* file, int line);
+#endif
 static void memoryBlockValidate(void* block);
 
 // 0x51DED0
+#if !defined(__WII__)
 static MallocProc* gMallocProc = memoryBlockMallocImpl;
+#else
+static void* (*gMallocProc)(size_t size, const char* file, int line) = memoryBlockMallocImpl;
+#endif
 
 // 0x51DED4
 static ReallocProc* gReallocProc = memoryBlockReallocImpl;
@@ -162,20 +194,31 @@ char* internal_strdup(const char* string)
 {
     char* copy = NULL;
     if (string != NULL) {
-        copy = (char*)gMallocProc(strlen(string) + 1);
+        copy = (char*)internal_malloc(strlen(string) + 1);
         strcpy(copy, string);
     }
     return copy;
 }
 
+#if !defined(__WII__)
 // 0x4C5AD0
 void* internal_malloc(size_t size)
 {
     return gMallocProc(size);
 }
+#else
+void* internal_malloc_managed(size_t size, const char* file, int line)
+{
+    return gMallocProc(size, file, line);
+}
+#endif
 
 // 0x4C5AD8
+#if !defined(__WII__)
 static void* memoryBlockMallocImpl(size_t size)
+#else
+static void* memoryBlockMallocImpl(size_t size, const char* file, int line)
+#endif
 {
     void* ptr = NULL;
 
@@ -190,7 +233,7 @@ static void* memoryBlockMallocImpl(size_t size)
 #endif
         if (block != NULL) {
             // NOTE: Uninline.
-            ptr = mem_prep_block(block, size);
+            ptr = mem_prep_block(block, size, file, line);
 
             gMemoryBlocksCurrentCount++;
             if (gMemoryBlocksCurrentCount > gMemoryBlockMaximumCount) {
@@ -222,6 +265,13 @@ static void* memoryBlockReallocImpl(void* ptr, size_t size)
         MemoryBlockHeader* header = (MemoryBlockHeader*)block;
         size_t oldSize = header->size;
 
+        for (int i = 0; i < 128; i++) {
+            if (gFileMemoryStats[i].file == header->file) {
+                gFileMemoryStats[i].size -= oldSize;
+                break;
+            }
+        }
+
         gMemoryBlocksCurrentSize -= oldSize;
 
         memoryBlockValidate(block);
@@ -243,7 +293,7 @@ static void* memoryBlockReallocImpl(void* ptr, size_t size)
             }
 
             // NOTE: Uninline.
-            ptr = mem_prep_block(newBlock, size);
+            ptr = mem_prep_block(newBlock, size, __FILE__, __LINE__);
         } else {
             if (size != 0) {
                 gMemoryBlocksCurrentSize += oldSize;
@@ -256,7 +306,7 @@ static void* memoryBlockReallocImpl(void* ptr, size_t size)
             ptr = NULL;
         }
     } else {
-        ptr = gMallocProc(size);
+        ptr = gMallocProc(size, __FILE__, __LINE__);
     }
 
     return ptr;
@@ -276,6 +326,13 @@ static void memoryBlockFreeImpl(void* ptr)
         MemoryBlockHeader* header = (MemoryBlockHeader*)block;
 
         memoryBlockValidate(block);
+
+        for (int i = 0; i < 128; i++) {
+            if (gFileMemoryStats[i].file == header->file) {
+                gFileMemoryStats[i].size -= header->size;
+                break;
+            }
+        }
 
         gMemoryBlocksCurrentSize -= header->size;
         gMemoryBlocksCurrentCount--;
@@ -302,13 +359,13 @@ static void memoryBlockPrintStats()
 #if defined(__WII__)
 void print_memory_stats()
 {
-    // show stats on screen (pos: 0, 460, size: 640x20)
+    // show stats on screen (pos: 0, 440, size: 640x20)
 
     char buf[256];
     sprintf(buf, "MEM: %6d blocks, %9u bytes total\n", gMemoryBlocksCurrentCount, gMemoryBlocksCurrentSize);
 
     int x = 0;
-    int y = 460;
+    int y = 440;
     int w = 640;
     int h = 20;
 
@@ -317,7 +374,7 @@ void print_memory_stats()
 
     fontDrawText(pix, buf, 640, 640, _colorTable[32767]);
 
-    _scr_blit(pix, 640, 480, 0, 0, w, h, x, y);
+    _scr_blit(pix, 640, 20, 0, 0, w, h, x, y);
 
     // printf("%s\n", buf);
 
@@ -328,13 +385,39 @@ void print_memory_stats()
     // _scr_blit(pix, 640, 480, 0, 0, w, h, x, y + 20);
 
     printf("%s\n", buf);
+
+    // print file memory stats
+
+    char* fileWithMostMemory = NULL;
+    int mostMemory = 0;
+    for (int i = 0; i < 128; i++) {
+        if (gFileMemoryStats[i].file != NULL && gFileMemoryStats[i].size != 0) {
+            sprintf(buf, "%s: %9u bytes\n", gFileMemoryStats[i].file, gFileMemoryStats[i].size);
+            printf("%s\n", buf);
+
+            if (gFileMemoryStats[i].size > mostMemory) {
+                mostMemory = gFileMemoryStats[i].size;
+                fileWithMostMemory = gFileMemoryStats[i].file;
+            }
+        }
+    }
+
+    if (fileWithMostMemory != NULL) {
+        sprintf(buf, "MOST MALLOCS: %s (%u bytes)\n", fileWithMostMemory, mostMemory);
+        fontDrawText(pix, buf, 640, 640, _colorTable[32767]);
+        _scr_blit(pix, 640, 20, 0, 0, w, h, x, y + 20);
+    }
 }
 #endif
 
 // NOTE: Inlined.
 //
 // 0x4C5CC4
+#if !defined(__WII__)
 static void* mem_prep_block(void* block, size_t size)
+#else
+static void* mem_prep_block(void* block, size_t size, const char* file, int line)
+#endif
 {
     MemoryBlockHeader* header;
     MemoryBlockFooter* footer;
@@ -342,6 +425,31 @@ static void* mem_prep_block(void* block, size_t size)
     header = (MemoryBlockHeader*)block;
     header->guard = MEMORY_BLOCK_HEADER_GUARD;
     header->size = size;
+
+#if defined(__WII__)
+
+    bool fileMemoryInfoInitialized = false;
+    for (int i = 0; i < 128; i++) {
+        if (strcmp(gFileMemoryStats[i].file, file) == 0) {
+            gFileMemoryStats[i].size += size;
+            fileMemoryInfoInitialized = true;
+            header->file = gFileMemoryStats[i].file;
+            header->line = line;
+            break;
+        }
+    }
+    if (!fileMemoryInfoInitialized) {
+        for (int i = 0; i < 128; i++) {
+            if (gFileMemoryStats[i].file == NULL) {
+                gFileMemoryStats[i].file = strdup(file);
+                gFileMemoryStats[i].size = size;
+                header->file = gFileMemoryStats[i].file;
+                header->line = line;
+                break;
+            }
+        }
+    }
+#endif
 
     footer = (MemoryBlockFooter*)((unsigned char*)block + size - sizeof(*footer));
     footer->guard = MEMORY_BLOCK_FOOTER_GUARD;

@@ -231,7 +231,11 @@ int gameSoundInit()
         return -1;
     }
 
+#if !defined(__WII__)
     soundSetMemoryProcs(internal_malloc, internal_realloc, internal_free);
+#else
+    soundSetMemoryProcs(internal_malloc_managed, internal_realloc, internal_free);
+#endif
 
     // initialize direct sound
     if (soundInit(_detectDevices, 24, 0x8000, 0x8000, 22050) != 0) {

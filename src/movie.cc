@@ -29,7 +29,11 @@ typedef struct MovieSubtitleListNode {
     struct MovieSubtitleListNode* next;
 } MovieSubtitleListNode;
 
+#if !defined(__WII__)
 static void* movieMallocImpl(size_t size);
+#else
+static void* movieMallocImpl(size_t size, const char* file, int line);
+#endif
 static void movieFreeImpl(void* ptr);
 static bool movieReadImpl(int fileHandle, void* buf, int count);
 static void movieDirectImpl(SDL_Surface* surface, int srcWidth, int srcHeight, int srcX, int srcY, int destWidth, int destHeight, int a8, int a9);
@@ -233,10 +237,17 @@ void _movieSetFunc(MovieStartFunc* startFunc, MovieEndFunc* endFunc)
 }
 
 // 0x4865FC
+#if !defined(__WII__)
 static void* movieMallocImpl(size_t size)
 {
     return internal_malloc_safe(size, __FILE__, __LINE__); // "..\\int\\MOVIE.C", 209
 }
+#else
+static void* movieMallocImpl(size_t size, const char* file, int line)
+{
+    return internal_malloc_safe(size, file, line);
+}
+#endif
 
 // 0x486614
 static void movieFreeImpl(void* ptr)

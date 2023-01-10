@@ -12,7 +12,11 @@ typedef void(MemoryManagerPrintErrorProc)(const char* string);
 static void memoryManagerDefaultPrintErrorImpl(const char* string);
 static int memoryManagerPrintError(const char* format, ...);
 [[noreturn]] static void memoryManagerFatalAllocationError(const char* func, size_t size, const char* file, int line);
+#if !defined(__WII__)
 static void* memoryManagerDefaultMallocImpl(size_t size);
+#else
+static void* memoryManagerDefaultMallocImpl(size_t size, const char* file, int line);
+#endif
 static void* memoryManagerDefaultReallocImpl(void* ptr, size_t size);
 static void memoryManagerDefaultFreeImpl(void* ptr);
 
@@ -62,7 +66,11 @@ static int memoryManagerPrintError(const char* format, ...)
 }
 
 // 0x48462C
+#if !defined(__WII__)
 static void* memoryManagerDefaultMallocImpl(size_t size)
+#else
+static void* memoryManagerDefaultMallocImpl(size_t size, const char* file, int line)
+#endif
 {
     return malloc(size);
 }
@@ -90,7 +98,11 @@ void memoryManagerSetProcs(MallocProc* mallocProc, ReallocProc* reallocProc, Fre
 // 0x484660
 void* internal_malloc_safe(size_t size, const char* file, int line)
 {
+#if !defined(__WII__)
     void* ptr = gMemoryManagerMallocProc(size);
+#else
+    void* ptr = gMemoryManagerMallocProc(size, file, line);
+#endif
     if (ptr == NULL) {
         memoryManagerFatalAllocationError("malloc", size, file, line);
     }
@@ -123,7 +135,11 @@ void internal_free_safe(void* ptr, const char* file, int line)
 // 0x4846D8
 void* internal_calloc_safe(int count, int size, const char* file, int line)
 {
+#if !defined(__WII__)
     void* ptr = gMemoryManagerMallocProc(count * size);
+#else
+    void* ptr = gMemoryManagerMallocProc(count * size, file, line);
+#endif
     if (ptr == NULL) {
         memoryManagerFatalAllocationError("calloc", size, file, line);
     }
@@ -137,7 +153,11 @@ void* internal_calloc_safe(int count, int size, const char* file, int line)
 char* strdup_safe(const char* string, const char* file, int line)
 {
     size_t size = strlen(string) + 1;
+#if !defined(__WII__)
     char* copy = (char*)gMemoryManagerMallocProc(size);
+#else
+    char* copy = (char*)gMemoryManagerMallocProc(size, file, line);
+#endif
     if (copy == NULL) {
         memoryManagerFatalAllocationError("strdup", size, file, line);
     }
