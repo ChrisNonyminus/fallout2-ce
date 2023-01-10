@@ -233,7 +233,11 @@ static void* memoryBlockMallocImpl(size_t size, const char* file, int line)
 #endif
         if (block != NULL) {
             // NOTE: Uninline.
+#if defined(__WII__)
             ptr = mem_prep_block(block, size, file, line);
+#else
+            ptr = mem_prep_block(block, size);
+#endif
 
             gMemoryBlocksCurrentCount++;
             if (gMemoryBlocksCurrentCount > gMemoryBlockMaximumCount) {
@@ -264,13 +268,14 @@ static void* memoryBlockReallocImpl(void* ptr, size_t size)
 
         MemoryBlockHeader* header = (MemoryBlockHeader*)block;
         size_t oldSize = header->size;
-
+#if defined(__WII__)
         for (int i = 0; i < 128; i++) {
             if (gFileMemoryStats[i].file == header->file) {
                 gFileMemoryStats[i].size -= oldSize;
                 break;
             }
         }
+#endif
 
         gMemoryBlocksCurrentSize -= oldSize;
 
@@ -293,7 +298,11 @@ static void* memoryBlockReallocImpl(void* ptr, size_t size)
             }
 
             // NOTE: Uninline.
+#if defined(__WII__)
             ptr = mem_prep_block(newBlock, size, __FILE__, __LINE__);
+#else
+            ptr = mem_prep_block(newBlock, size);
+#endif
         } else {
             if (size != 0) {
                 gMemoryBlocksCurrentSize += oldSize;
@@ -306,7 +315,11 @@ static void* memoryBlockReallocImpl(void* ptr, size_t size)
             ptr = NULL;
         }
     } else {
+#if defined(__WII_)
         ptr = gMallocProc(size, __FILE__, __LINE__);
+#else
+        ptr = gMallocProc(size);
+#endif
     }
 
     return ptr;
@@ -326,13 +339,14 @@ static void memoryBlockFreeImpl(void* ptr)
         MemoryBlockHeader* header = (MemoryBlockHeader*)block;
 
         memoryBlockValidate(block);
-
+#if defined(__WII__)
         for (int i = 0; i < 128; i++) {
             if (gFileMemoryStats[i].file == header->file) {
                 gFileMemoryStats[i].size -= header->size;
                 break;
             }
         }
+#endif
 
         gMemoryBlocksCurrentSize -= header->size;
         gMemoryBlocksCurrentCount--;
@@ -359,6 +373,7 @@ static void memoryBlockPrintStats()
 #if defined(__WII__)
 void print_memory_stats()
 {
+#if 0
     // show stats on screen (pos: 0, 440, size: 640x20)
 
     char buf[256];
@@ -407,6 +422,7 @@ void print_memory_stats()
         fontDrawText(pix, buf, 640, 640, _colorTable[32767]);
         _scr_blit(pix, 640, 20, 0, 0, w, h, x, y + 20);
     }
+#endif
 }
 #endif
 
