@@ -117,6 +117,24 @@ extern int _art_vault_person_nums[DUDE_NATIVE_LOOK_COUNT][GENDER_COUNT];
 
 extern Cache gArtCache;
 
+
+
+typedef struct ArtListDescription {
+    int flags;
+    char name[16];
+    char* fileNames; // dynamic array of null terminated strings 13 bytes long each
+    void* field_18;
+    int fileNamesLength; // number of entries in list
+} ArtListDescription;
+
+typedef struct HeadDescription {
+    int goodFidgetCount;
+    int neutralFidgetCount;
+    int badFidgetCount;
+} HeadDescription;
+
+extern ArtListDescription gArtListDescriptions[OBJ_TYPE_COUNT];
+
 int artInit();
 void artReset();
 void artExit();
@@ -150,6 +168,9 @@ int artAliasFid(int fid);
 int buildFid(int objectType, int frmId, int animType, int a4, int rotation);
 int artRead(const char* path, unsigned char* data);
 int artWrite(const char* path, unsigned char* data);
+
+Art* artGet(const char* path);
+Art* artDownscale2x(Art* art, size_t origFileSize);
 
 class FrmImage {
 public:

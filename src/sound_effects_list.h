@@ -15,6 +15,16 @@ int soundEffectsListGetFilePath(int tag, char** pathPtr);
 int soundEffectsListGetDataSize(int tag, int* sizePtr);
 int soundEffectsListGetFileSize(int tag, int* sizePtr);
 
+typedef struct SoundEffectsListEntry {
+    char* name;
+    int dataSize;
+    int fileSize;
+    int tag;
+} SoundEffectsListEntry;
+
+extern SoundEffectsListEntry* gSoundEffectsListEntries;
+extern int gSoundEffectsListEntriesLength;
+
 } // namespace fallout
 
 #endif /* SOUND_EFFECTS_LIST_H */

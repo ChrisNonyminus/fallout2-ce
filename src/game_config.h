@@ -122,6 +122,12 @@ bool gameConfigInit(bool isMapper, int argc, char** argv);
 bool gameConfigSave();
 bool gameConfigExit(bool shouldSave);
 
+#ifdef PACKER
+extern bool gIsPacking;
+extern char* gPackerDestFolder;
+extern int gOptimFlags;
+#endif
+
 } // namespace fallout
 
 #endif /* GAME_CONFIG_H */

@@ -17,12 +17,7 @@
 #endif
 namespace fallout {
 
-typedef struct SoundEffectsListEntry {
-    char* name;
-    int dataSize;
-    int fileSize;
-    int tag;
-} SoundEffectsListEntry;
+
 
 static int soundEffectsListTagToIndex(int tag, int* indexPtr);
 static void soundEffectsListClear();
@@ -51,12 +46,12 @@ static int gSoundEffectsListPathLength = 0;
 //
 // sfxl_list
 // 0x51C908
-static SoundEffectsListEntry* gSoundEffectsListEntries = NULL;
+SoundEffectsListEntry* gSoundEffectsListEntries = NULL;
 
 // The length of [gSoundEffectsListEntries] array.
 //
 // 0x51C90C
-static int gSoundEffectsListEntriesLength = 0;
+int gSoundEffectsListEntriesLength = 0;
 
 // 0x667F94
 static int _sfxl_compression;

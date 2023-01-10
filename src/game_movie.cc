@@ -31,7 +31,7 @@ static char* gameMovieBuildSubtitlesFilePath(char* movieFilePath);
 static const float flt_50352A = 0.032258064f;
 
 // 0x518DA0
-static const char* gMovieFileNames[MOVIE_COUNT] = {
+const char* gMovieFileNames[MOVIE_COUNT] = {
     "iplogo.mve",
     "intro.mve",
     "elder.mve",

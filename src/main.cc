@@ -15,6 +15,7 @@
 #include "draw.h"
 #include "endgame.h"
 #include "game.h"
+#include "game_config.h"
 #include "game_mouse.h"
 #include "game_movie.h"
 #include "game_sound.h"
@@ -42,6 +43,9 @@
 #include "word_wrap.h"
 #include "worldmap.h"
 
+#ifdef PACKER
+#include "packer/packer.h"
+#endif
 
 #if defined(__WII__)
     #include "memory.h"
@@ -187,6 +191,16 @@ int falloutMain(int argc, char** argv)
     if (!falloutInit(argc, argv)) {
         return 1;
     }
+
+#ifdef PACKER
+    Packer packer(gPackerDestFolder, gOptimFlags);
+    packer.optimize();
+    if (gOptimFlags & OPTIM_FLAG_COMPRESS_ASSETS) {
+        packer.compress_assets(gPackerDestFolder);
+    }
+    exit(0);
+#endif
+
 
     // SFALL: Allow to skip intro movies
     int skipOpeningMovies;

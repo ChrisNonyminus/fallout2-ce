@@ -21,20 +21,6 @@
 
 namespace fallout {
 
-typedef struct ArtListDescription {
-    int flags;
-    char name[16];
-    char* fileNames; // dynamic array of null terminated strings 13 bytes long each
-    void* field_18;
-    int fileNamesLength; // number of entries in list
-} ArtListDescription;
-
-typedef struct HeadDescription {
-    int goodFidgetCount;
-    int neutralFidgetCount;
-    int badFidgetCount;
-} HeadDescription;
-
 static int artReadList(const char* path, char** out_arr, int* out_count);
 static int artCacheGetFileSizeImpl(int a1, int* out_size);
 static int artCacheReadDataImpl(int a1, int* a2, unsigned char* data);
@@ -55,7 +41,7 @@ static char gDefaultTribalMaleFileName[] = "hmwarr";
 static char gDefaultTribalFemaleFileName[] = "hfprim";
 
 // 0x510738
-static ArtListDescription gArtListDescriptions[OBJ_TYPE_COUNT] = {
+ArtListDescription gArtListDescriptions[OBJ_TYPE_COUNT] = {
     { 0, "items", 0, 0, 0 },
     { 0, "critters", 0, 0, 0 },
     { 0, "scenery", 0, 0, 0 },
@@ -761,6 +747,85 @@ int artGetFramesPerSecond(Art* art)
     }
 
     return art->framesPerSecond == 0 ? 10 : art->framesPerSecond;
+}
+
+Art* artGet(const char* path)
+{
+    int size;
+    dbGetFileSize(path, &size);
+    Art* art = (Art*)malloc(size);
+    if (art == NULL) {
+        return NULL;
+    }
+
+    if (artRead(path, (unsigned char*)art) < 0) {
+        free(art);
+        return NULL;
+    }
+
+    return art;
+}
+
+Art* artDownscale2x(Art* art, size_t origFileSize)
+{
+#if PACKER
+    for (int i = 0; i < art->frameCount; i++) {
+        for (int rot = 0; rot < ROTATION_COUNT; rot++) {
+            if (art->dataOffsets[rot] == 0 && rot != 0)
+                continue;
+
+            ArtFrame* frame = artGetFrame(art, i, rot);
+            if (frame == NULL || (uintptr_t)frame > (uintptr_t)art + origFileSize) {
+                continue;
+            }
+
+
+            int width = frame->width;
+            int height = frame->height;
+
+            if (width == 0 || height == 0) {
+                continue;
+            }
+
+            int newWidth = width / 2;
+            int newHeight = height / 2;
+
+            uint8_t* resized = (uint8_t*)internal_malloc(newWidth * newHeight);
+            if (resized == NULL) {
+                continue;
+            }
+
+            uint8_t* src = artGetFrameData(art, i, rot);
+            if (src == NULL || (uintptr_t)src > (uintptr_t)art + origFileSize) {
+                internal_free(resized);
+                continue;
+            }
+
+            for (int y = 0; y < newHeight; y++) {
+                for (int x = 0; x < newWidth; x++) {
+                    int srcX = x * 2;
+                    int srcY = y * 2;
+
+                    int srcIndex = srcX + srcY * width;
+                    int dstIndex = x + y * newWidth;
+
+                    resized[dstIndex] = src[srcIndex];
+                }
+            }
+
+            memcpy(src, resized, newWidth * newHeight);
+
+            frame->width = newWidth;
+            frame->height = newHeight;
+            frame->size = newWidth * newHeight;
+
+            internal_free(resized);
+        }
+    }
+
+#endif
+
+    return art;
 }
 
 // 0x419778

@@ -6,6 +6,10 @@
 #include "main.h"
 #include "platform_compat.h"
 
+#ifdef PACKER
+#include "packer/packer.h"
+#endif
+
 namespace fallout {
 
 // A flag indicating if [gGameConfig] was initialized.
@@ -49,6 +53,12 @@ char gGameConfigFilePath[COMPAT_MAX_PATH];
 #else
 #define PATH_PREFIX ""
 #endif
+#ifdef PACKER
+ bool gIsPacking = true;
+ char* gPackerDestFolder = NULL;
+ int gOptimFlags = 0;
+#endif
+
 bool gameConfigInit(bool isMapper, int argc, char** argv)
 {
     if (gGameConfigInitialized) {
@@ -126,7 +136,7 @@ bool gameConfigInit(bool isMapper, int argc, char** argv)
         configSetInt(&gGameConfig, GAME_CONFIG_MAPPER_KEY, GAME_CONFIG_DEFAULT_F8_AS_GAME_KEY, 1);
         configSetInt(&gGameConfig, GAME_CONFIG_MAPPER_KEY, GAME_CONFIG_SORT_SCRIPT_LIST_KEY, 0);
     }
-
+#if !defined(PACKER)
     // Make `fallout2.cfg` file path.
     char* executable = argv[0];
     char* ch = strrchr(executable, '\\');
@@ -145,6 +155,16 @@ bool gameConfigInit(bool isMapper, int argc, char** argv)
     // Add key-values from command line, which overrides both defaults and
     // whatever was loaded from `fallout2.cfg`.
     configParseCommandLineArguments(&gGameConfig, argc, argv);
+#else
+    gPackerDestFolder = argv[1];
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "-downscale") == 0) {
+            gOptimFlags |= OPTIM_FLAG_DOWNSCALE_ART_2X;
+        } else if (strcmp(argv[i], "-compress") == 0) {
+            gOptimFlags |= OPTIM_FLAG_COMPRESS_ASSETS;
+        }
+    }
+#endif
 
     gGameConfigInitialized = true;
 

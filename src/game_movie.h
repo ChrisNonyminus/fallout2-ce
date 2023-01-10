@@ -33,6 +33,8 @@ typedef enum GameMovie {
     MOVIE_COUNT,
 } GameMovie;
 
+extern const char* gMovieFileNames[MOVIE_COUNT];
+
 int gameMoviesInit();
 void gameMoviesReset();
 int gameMoviesLoad(File* stream);

@@ -292,6 +292,18 @@ else()
     )
 endif()
 
+if (PACKER)
+    target_compile_definitions(${EXECUTABLE_NAME} PUBLIC
+        PACKER
+    )
+    target_sources(${EXECUTABLE_NAME} PUBLIC
+        "src/packer/packer.cpp"
+    )
+    target_include_directories(${EXECUTABLE_NAME} PUBLIC
+        "src/"
+    )
+endif()
+
 if(WIN32)
     target_link_libraries(${EXECUTABLE_NAME}
         winmm

@@ -145,7 +145,24 @@ int fileClose(File* stream)
 // 0x4C5EC8
 File* fileOpen(const char* filename, const char* mode)
 {
+#if !defined(PACKER)
     return xfileOpen(filename, mode);
+#else
+    FILE* stream = fopen(filename, mode);
+    if (stream == NULL) {
+        return xfileOpen(filename, mode);
+    }
+
+    File* file = (File*)malloc(sizeof(*file));
+    if (file == NULL) {
+        fclose(stream);
+        return NULL;
+    }
+
+    file->file = stream;
+    
+    return file;
+#endif
 }
 
 // 0x4C5ED0
