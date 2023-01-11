@@ -128,6 +128,7 @@ bool gameConfigInit(bool isMapper, int argc, char** argv)
     }
 
     // Make `fallout2.cfg` file path.
+#if !defined(__WII__)
     char* executable = argv[0];
     char* ch = strrchr(executable, '\\');
     if (ch != NULL) {
@@ -137,6 +138,9 @@ bool gameConfigInit(bool isMapper, int argc, char** argv)
     } else {
         strcpy(gGameConfigFilePath, PATH_PREFIX GAME_CONFIG_FILE_NAME);
     }
+#else
+    strcpy(gGameConfigFilePath, PATH_PREFIX GAME_CONFIG_FILE_NAME);
+#endif
 
     // Read contents of `fallout2.cfg` into config. The values from the file
     // will override the defaults above.

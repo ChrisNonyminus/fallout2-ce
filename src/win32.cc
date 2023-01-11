@@ -117,6 +117,8 @@ int main(int argc, char* argv[])
     WPAD_SetVRes(WPAD_CHAN_ALL, 640, 480);
     MOUSE_Init();
     KEYBOARD_Init(NULL);
+
+    
 #endif
 
     return fallout::main(argc, argv);
@@ -129,7 +131,7 @@ void Terminate()
 {
     SDL_Quit();
     printf("Terminate requested\n");
-    exit(1);
+    exit(0);
 }
 #endif
 }

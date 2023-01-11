@@ -315,7 +315,7 @@ static void* memoryBlockReallocImpl(void* ptr, size_t size)
             ptr = NULL;
         }
     } else {
-#if defined(__WII_)
+#if defined(__WII__)
         ptr = gMallocProc(size, __FILE__, __LINE__);
 #else
         ptr = gMallocProc(size);
@@ -442,7 +442,7 @@ static void* mem_prep_block(void* block, size_t size, const char* file, int line
     header->guard = MEMORY_BLOCK_HEADER_GUARD;
     header->size = size;
 
-#if defined(__WII__)
+#if 0
 
     bool fileMemoryInfoInitialized = false;
     for (int i = 0; i < 128; i++) {

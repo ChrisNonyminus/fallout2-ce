@@ -65,6 +65,7 @@ bool sfallConfigInit(int argc, char** argv)
     configSetInt(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_BURST_MOD_TARGET_DIVISOR_KEY, SFALL_CONFIG_BURST_MOD_DEFAULT_TARGET_DIVISOR);
     configSetString(&gSfallConfig, SFALL_CONFIG_MISC_KEY, SFALL_CONFIG_EXTRA_MESSAGE_LISTS_KEY, "");
 
+#if !defined(__WII__)
     char path[COMPAT_MAX_PATH];
     char* executable = argv[0];
     char* ch = strrchr(executable, '\\');
@@ -75,6 +76,10 @@ bool sfallConfigInit(int argc, char** argv)
     } else {
         strcpy(path, PATH_PREFIX SFALL_CONFIG_FILE_NAME);
     }
+#else
+    char path[COMPAT_MAX_PATH];
+    strcpy(path, PATH_PREFIX SFALL_CONFIG_FILE_NAME);
+#endif
 
     configRead(&gSfallConfig, path, false);
 

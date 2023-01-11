@@ -546,6 +546,14 @@ bool xbaseOpen(const char* path)
         return true;
     }
 
+#if defined(__WII__)
+    xbase->isDbase = false;
+    xbaseMakeDirectory(path);
+    xbase->next = gXbaseHead;
+    gXbaseHead = xbase;
+    return true;
+#endif
+
     char workingDirectory[COMPAT_MAX_PATH];
     if (getcwd(workingDirectory, COMPAT_MAX_PATH) == NULL) {
         // FIXME: Leaking xbase and path.

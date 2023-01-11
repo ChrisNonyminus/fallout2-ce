@@ -140,7 +140,7 @@ int artInit()
 #if !defined(__WII__)
     int cacheSize = settings.system.art_cache_size;
 #else
-    int cacheSize = 2; // 2 MB on Wii
+    int cacheSize = 8; // 8 MB on Wii
 #endif
     if (!cacheInit(&gArtCache, artCacheGetFileSizeImpl, artCacheReadDataImpl, artCacheFreeImpl, cacheSize << 20)) {
         debugPrint("cache_init failed in art_init\n");
