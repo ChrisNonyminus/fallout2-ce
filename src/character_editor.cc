@@ -1936,6 +1936,7 @@ static int _get_input_str(int win, int cancelKeyCode, char* text, int maxLength,
 
     windowRefresh(win);
 
+#if !defined(__3DS__)
     beginTextInput();
 
     int blinkingCounter = 3;
@@ -2038,11 +2039,26 @@ static int _get_input_str(int win, int cancelKeyCode, char* text, int maxLength,
 
     
 #endif
+    
+
+
 
 
     
 
     endTextInput();
+#else // use os's ime
+    int rc = 1;
+    char* txt = beginTextInput(text);
+    if (txt == NULL) {
+        rc = -1;
+    }
+    else {
+        nameLength = strlen(txt);
+        strcpy(copy, txt);
+        rc = 0;
+    }
+#endif
 
     if (rc == 0 || nameLength > 0) {
         copy[nameLength] = '\0';

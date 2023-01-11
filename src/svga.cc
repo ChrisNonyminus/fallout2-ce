@@ -55,6 +55,12 @@ SDL_Surface* gSdlBottomScreen = NULL;
 // TODO: Remove once migration to update-render cycle is completed.
 FpsLimiter sharedFpsLimiter;
 
+float gWindowScale = 1.0f;
+
+#if defined(__3DS__)
+//float gBottomScreenScale = 1.0f;
+#endif
+
 // 0x4CACD0
 void mmxSetEnabled(bool a1)
 {
@@ -179,6 +185,14 @@ int _GNW95_init_mode_ex(int width, int height, int bpp)
     _scr_size.right = width - 1;
     _scr_size.bottom = height - 1;
 
+#if defined(__3DS__)
+    gWindowScale = (float)height / (float)gSdlWindow->h;
+    //gBottomScreenScale = (float)gSdlBottomScreen->h / (float)height;
+#else
+    gWindowScale = (float)height / (float)gSdlSurface->;
+#endif
+
+
     mmxSetEnabled(true);
 
     _mouse_blit_trans = NULL;
@@ -203,7 +217,7 @@ int _GNW95_init_window(int width, int height, bool fullscreen)
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 #endif
 
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) != 0) {
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0) {
             return -1;
         }
         SDL_ShowCursor(SDL_DISABLE);
@@ -218,8 +232,8 @@ int _GNW95_init_window(int width, int height, bool fullscreen)
         gSdlWindow = SDL_CreateWindow(gProgramWindowTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, windowFlags);
 #else
 #if defined(__3DS__)
-        gSdlWindow = SDL_SetVideoMode(400, 480, 8, SDL_HWSURFACE | SDL_FULLSCREEN | SDL_DUALSCR | SDL_DOUBLEBUF);
-        gSdlTopScreen = SDL_CreateRGBSurface(0, 400, 240, 8, 0, 0, 0, 0);
+        gSdlWindow = SDL_SetVideoMode(320, 240, 8, SDL_HWSURFACE | SDL_CONSOLETOP | SDL_BOTTOMSCR | SDL_DOUBLEBUF);
+        gSdlTopScreen = SDL_CreateRGBSurface(0, 320, 240, 8, 0, 0, 0, 0);
         gSdlBottomScreen = SDL_CreateRGBSurface(0, 320, 240, 8, 0, 0, 0, 0);
 
 #else
@@ -307,7 +321,9 @@ void directDrawFree()
     }
 }
 
+#if defined(__3DS__)
 SDL_Rect BTM_OFFSET = { 0, 240 };
+#endif
 // 0x4CB310
 void directDrawSetPaletteInRange(unsigned char* palette, int start, int count)
 {
@@ -407,7 +423,24 @@ void _GNW95_ShowRect(unsigned char* src, int srcPitch, int a3, int srcX, int src
 
     blitBufferToBuffer(src + srcPitch * srcY + srcX, srcWidth, srcHeight, srcPitch, (unsigned char*)gSdlSurface->pixels + gSdlSurface->pitch * destY + destX, gSdlSurface->pitch);
 #else
-    blitBufferToBuffer(src + srcPitch * srcY + srcX, srcWidth, srcHeight, srcPitch, (unsigned char*)gSdlTopScreen->pixels + gSdlTopScreen->pitch * destY + destX, gSdlTopScreen->pitch);
+    destX = (int)(float(destX) / gWindowScale);
+    destY = (int)(float(destY) / gWindowScale);
+    srcWidth = (int)(float(srcWidth) / gWindowScale);
+    srcHeight = (int)(float(srcHeight) / gWindowScale);
+
+    // downscale by scale
+
+    unsigned char* resized = (unsigned char*)malloc(srcWidth * srcHeight);
+
+    for (int y = 0; y < srcHeight; y++) {
+        for (int x = 0; x < srcWidth; x++) {
+            resized[y * srcWidth + x] = src[int((y * srcPitch + x) * gWindowScale)];
+        }
+    }
+
+    blitBufferToBuffer(resized, srcWidth, srcHeight, srcWidth, (unsigned char*)gSdlTopScreen->pixels + gSdlTopScreen->pitch * destY + destX, gSdlTopScreen->pitch);
+
+    free(resized);
 #endif
 
     SDL_Rect srcRect;
@@ -422,8 +455,11 @@ void _GNW95_ShowRect(unsigned char* src, int srcPitch, int a3, int srcX, int src
 
 
 #if defined(__3DS__)
+    // SDL_Rect btmRect;
+    // btmRect.x = destX;
+    // btmRect.y = destY + 240;
     SDL_BlitSurface(gSdlTopScreen, &srcRect, gSdlTextureSurface, &destRect);
-    SDL_BlitSurface(gSdlBottomScreen, &srcRect, gSdlTextureSurface, &destRect);
+    //SDL_BlitSurface(gSdlBottomScreen, &srcRect, gSdlTextureSurface, &btmRect);
 #else
 
     SDL_BlitSurface(gSdlSurface, &srcRect, gSdlTextureSurface, &destRect);
@@ -573,6 +609,12 @@ void renderPresent()
     // SDL_BlitSurface(converted, NULL, gSdlWindow, NULL);
     // SDL_FreeSurface(converted);
     // SDL_UnlockSurface(gSdlWindow);
+#endif
+#if defined(__3DS__)
+    // SDL_BlitSurface(gSdlTopScreen, NULL, gSdlWindow, NULL);
+    // SDL_BlitSurface(gSdlBottomScreen, NULL, gSdlWindow, &BTM_OFFSET);
+    SDL_Flip(gSdlWindow);
+
 #endif
 #endif
 }

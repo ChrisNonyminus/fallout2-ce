@@ -44,7 +44,11 @@ void _GNW95_process_message();
 void _GNW95_clear_time_stamps();
 void _GNW95_lost_focus();
 
+#if !defined(__3DS__)
 void beginTextInput();
+#else
+char* beginTextInput(char* defaultText);
+#endif
 void endTextInput();
 
 } // namespace fallout

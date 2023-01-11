@@ -26,7 +26,9 @@ struct AudioEngineSoundBuffer {
 #else
     void* stream;
 #endif
+#if !defined(__3DS__)
     std::recursive_mutex mutex;
+#endif
 };
 
 extern bool gProgramIsActive;
@@ -121,6 +123,9 @@ static void audioEngineMixin(void* userData, Uint8* stream, int length)
 bool audioEngineInit()
 {
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) == -1) {
+#if defined(__3DS__)
+        printf("SDL_InitSubSystem(SDL_INIT_AUDIO) failed: %s\n", SDL_GetError());
+#endif
         return false;
     }
 
@@ -136,6 +141,9 @@ bool audioEngineInit()
     gAudioEngineDeviceId = SDL_OpenAudio(&desiredSpec, &gAudioEngineSpec);
 #endif
     if (gAudioEngineDeviceId == -1) {
+#if defined(__3DS__)
+        printf("SDL_OpenAudioDevice() failed: %s\n", SDL_GetError());
+#endif
         return false;
     }
 
@@ -153,9 +161,9 @@ void audioEngineExit()
     if (audioEngineIsInitialized()) {
 #if !defined(__3DS__) && !defined(__WII__)
         SDL_CloseAudioDevice(gAudioEngineDeviceId);
-#else 
+#else
         SDL_CloseAudio();
-        
+
 #endif
         gAudioEngineDeviceId = -1;
     }

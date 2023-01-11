@@ -298,7 +298,7 @@ if(WIN32)
     )
 endif()
 
-if (NINTENDO_3DS)
+if (NINTENDO_3DS OR 3DS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/opt/devkitpro/libctru/include")
     target_include_directories(${EXECUTABLE_NAME} PUBLIC
         "/opt/devkitpro/libctru/include"
@@ -308,12 +308,13 @@ if (NINTENDO_3DS)
     # add the following libraries via linker flags: ZLIB, citro2d, citro3D, SDL, SDL_gfx, SDL_image, SDL_mixer
     target_link_libraries(${EXECUTABLE_NAME}
         -lz
-        -lcitro2d
-        -lcitro3d
         -lSDL
         -lSDL_gfx
         -lSDL_image
         -lSDL_mixer
+        -lcitro2d
+        -lcitro3d
+        -lctru
     )
 
 endif()

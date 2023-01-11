@@ -1119,6 +1119,7 @@ int showSaveFileDialog(char* title, char** fileList, char* dest, int fileListLen
 
     windowRefresh(win);
 
+#if !defined(__3DS__)
     beginTextInput();
 
     int blinkingCounter = 3;
@@ -1429,6 +1430,15 @@ int showSaveFileDialog(char* title, char** fileList, char* dest, int fileListLen
     osk.deinit();
 #endif
 
+#else // use OS's IME
+    int rc = 1;
+    char* text = beginTextInput(fileNameCopy);
+    if (text != NULL) {
+        strcpy(fileNameCopy, text);
+        rc = 0;
+    }
+
+#endif
 
     endTextInput();
 

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "platform_compat.h"
 
 #include <string.h>
@@ -67,7 +68,24 @@ char* compat_strlwr(char* string)
 
 char* compat_itoa(int value, char* buffer, int radix)
 {
+#if !defined(__3DS__)
     return SDL_itoa(value, buffer, radix);
+#else
+    char temp[32];
+    switch (radix)
+    {
+    case 10:
+        sprintf(temp, "%d", value);
+        break;
+    case 16:
+        sprintf(temp, "%x", value);
+        break;
+    default:
+        return NULL;
+    }
+    strcpy(buffer, temp);
+    return buffer;
+#endif
 }
 
 void compat_splitpath(const char* path, char* drive, char* dir, char* fname, char* ext)
@@ -309,7 +327,13 @@ void compat_windows_path_to_native(char* path)
 
 char* compat_strdup(const char* string)
 {
+#if !defined(__3DS__)
     return SDL_strdup(string);
+#else
+    char* result = (char*)malloc(strlen(string) + 1);
+    strcpy(result, string);
+    return result;
+#endif
 }
 
 // It's a replacement for compat_filelength(fileno(stream)) on platforms without

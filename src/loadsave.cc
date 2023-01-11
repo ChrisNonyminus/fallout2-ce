@@ -2217,6 +2217,7 @@ static int _get_input_str2(int win, int doneKeyCode, int cancelKeyCode, char* de
     windowRefresh(win);
     renderPresent();
 
+#if !defined(__3DS__)
     beginTextInput();
 
     int blinkCounter = 3;
@@ -2333,6 +2334,15 @@ static int _get_input_str2(int win, int doneKeyCode, int cancelKeyCode, char* de
 
 #endif
     endTextInput();
+
+#else
+    int rc = 1;
+    char* txt = beginTextInput(text);
+    if (txt != NULL) {
+        rc = 0;
+        strcpy(text, txt);
+    }
+#endif
 
     if (rc == 0) {
         text[textLength] = '\0';

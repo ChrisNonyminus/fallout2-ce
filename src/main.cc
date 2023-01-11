@@ -442,6 +442,7 @@ static void mainLoop()
 
     scriptsEnable();
 
+
     while (_game_user_wants_to_quit == 0) {
         sharedFpsLimiter.mark();
 

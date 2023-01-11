@@ -14,7 +14,9 @@
 #include "vcr.h"
 #include "win32.h"
 
-#if defined(__WII__)
+#if defined(__3DS__)
+#include <3ds.h>
+#include <memory.h>
 #endif
 
 namespace fallout {
@@ -1218,13 +1220,37 @@ static void idleImpl()
     SDL_Delay(125);
 }
 
+#if defined(__3DS__)
+// use software keyboard
+static SwkbdState gSwkbd;
+static SwkbdStatusData gSwkbdStatus;
+#endif
+
+
+#if !defined(__3DS__)
 void beginTextInput()
+#else
+char* beginTextInput(char* defaultText)
+#endif
 {
 #if !defined(__WII__) && !defined(__3DS__)
     SDL_StartTextInput();
 #else
     //SDL_EnableUNICODE(1);
 #endif
+#if defined(__3DS__)
+    swkbdInit(&gSwkbd, SWKBD_TYPE_NORMAL, 2, -1);
+    swkbdSetValidation(&gSwkbd, SWKBD_NOTEMPTY_NOTBLANK, 0, 0);
+    swkbdSetInitialText(&gSwkbd, defaultText);
+    swkbdSetFeatures(&gSwkbd, SWKBD_FIXED_WIDTH);
+    char* text = internal_strdup(defaultText);
+    SwkbdButton button = swkbdInputText(&gSwkbd, text, 256);
+    if (button == SWKBD_BUTTON_CONFIRM) {
+        return text;
+    }
+    return NULL;
+#endif
+
 }
 
 void endTextInput()

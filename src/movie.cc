@@ -336,7 +336,8 @@ static void movieDirectImpl(SDL_Surface* surface, int srcWidth, int srcHeight, i
     // MVE does not have palette. If we blit from these internal surfaces into
     // backbuffer surface (with palette set), all we get is shiny white box.
 
-#if !defined(__WII__) && !defined(__3DS__)
+#if !defined(__3DS__)
+#if !defined(__WII__)
     SDL_SetSurfacePalette(surface, gSdlSurface->format->palette);
 #else
     SDL_SetColors(surface, gSdlSurface->format->palette->colors, 0, 256);
@@ -345,6 +346,30 @@ static void movieDirectImpl(SDL_Surface* surface, int srcWidth, int srcHeight, i
     SDL_BlitSurface(surface, &srcRect, gSdlSurface, &destRect);
     SDL_BlitSurface(gSdlSurface, NULL, gSdlTextureSurface, NULL);
     renderPresent();
+#else
+    SDL_SetColors(surface, gSdlSurface->format->palette->colors, 0, 256);
+
+    // downscale surface pixels by 2
+    SDL_Surface* surface2 = SDL_CreateRGBSurface(0, srcWidth / 2, srcHeight / 2, 8, 0, 0, 0, 0);
+    SDL_SetColors(surface2, gSdlSurface->format->palette->colors, 0, 256);
+    for (int y = 0; y < srcHeight / 2; y++) {
+        for (int x = 0; x < srcWidth / 2; x++) {
+            ((unsigned char*)surface2->pixels)[y * surface2->pitch + x] = ((unsigned char*)surface->pixels)[y * 2 * surface->pitch + x * 2];
+        }
+    }
+
+    SDL_SetColors(gSdlTopScreen, gSdlSurface->format->palette->colors, 0, 256);
+
+    SDL_BlitSurface(surface2, &srcRect, gSdlTopScreen, &destRect);
+    //SDL_BlitSurface(surface, &srcRect, gSdlBottomScreen, &destRect);
+    SDL_BlitSurface(gSdlTopScreen, NULL, gSdlTextureSurface, NULL);
+    //SDL_BlitSurface(gSdlBottomScreen, NULL, gSdlTextureSurface, NULL);
+
+    SDL_FreeSurface(surface2);
+    renderPresent();
+#endif
+
+
 }
 
 // 0x486900
